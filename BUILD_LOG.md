@@ -310,6 +310,52 @@
   - Zero forbidden feature leakage with `assert_no_leakage`.
 - Command: `.\venv\Scripts\pytest.exe -v` -> **14 passed in 3.38s**.
 
+---
+
+## 2026-10-04 - Phase 3.1: Reproducibility Patch & Random-CV Control (Protocol D)
+
+### Step 1: Investigation & Explanation of Phase 3 Metric Change
+- **Context**: In Phase 3, the initial output stream of `scripts/run_supervised_eval.py` reported 5-repeat results of XGBoost Acc 0.9556 / F1 0.9547, RF F1 0.9366, DT F1 0.9213, selecting XGBoost. In the clean re-run across seeds 0–4, the numbers became XGBoost Acc 0.9470 / F1 0.9451, RF 0.9414, DT 0.9230, and Logistic Regression achieved 0.9499 Macro-F1 (Rank 1), selecting Logistic Regression.
+- **Analysis**:
+  - The script and evaluation module on disk deterministically produce XGBoost Acc 0.9470 / F1 0.9451, RF 0.9414, and DT 0.9230 when evaluated using `StratifiedGroupKFold(n_splits=5, shuffle=True)` across seeds 0–4.
+  - In the initial task stream, Logistic Regression was omitted from the repeat loop or an alternate seed list/aggregation scheme was evaluated during script drafting.
+  - Because the exact seed configuration and aggregation script state that generated the initial 0.9556/0.9547 console stream was not preserved in Git or persistent files on disk, the exact mechanism is formally classified as **UNVERIFIED**.
+
+### Step 2: Determinism Check
+- Executed `scripts/run_supervised_eval.py` twice consecutively in the environment.
+- Computed SHA-256 hash of `reports/supervised_results.csv` after each run:
+  - **Run 1 Hash**: `91C4915403415AF9918EF4A945B3A5E0CD5431E102AB16801904C3E8D2DF8DDB`
+  - **Run 2 Hash**: `91C4915403415AF9918EF4A945B3A5E0CD5431E102AB16801904C3E8D2DF8DDB`
+  - **Identical**: **True** (Bit-for-bit determinism verified).
+
+### Step 3: Protocol D (Fair Random-CV Contamination Test) Implementation
+- Implemented `run_protocol_d()` in `src/burnoutlens/evaluation.py`:
+  - Uses non-grouped `StratifiedKFold(n_splits=5, shuffle=True)` across identical seeds 0–4.
+  - Uses the same clean Pipeline (fitted on train folds only) and same 5 baseline models.
+  - Splitting does not require groups; tracks per-fold duplicate contamination rate if groups are provided.
+- Measured Contamination Rate:
+  - **Average Twin Rows per Fold**: `60.76 ± 3.64` rows out of 74–75 validation samples (**81.2% contamination**).
+- Head-to-Head Comparison (Protocol D vs. Protocol C):
+  - **Logistic Regression**: Protocol C F1 `0.9499 ± 0.0060` vs. Protocol D F1 `0.9606 ± 0.0032` (Diff: `+0.0107`, > 1 std)
+  - **Decision Tree**: Protocol C F1 `0.9230 ± 0.0110` vs. Protocol D F1 `0.9566 ± 0.0049` (Diff: `+0.0336`, > 3 std)
+  - **Random Forest**: Protocol C F1 `0.9414 ± 0.0092` vs. Protocol D F1 `0.9751 ± 0.0029` (Diff: `+0.0337`, > 3 std)
+  - **XGBoost**: Protocol C F1 `0.9451 ± 0.0078` vs. Protocol D F1 `0.9759 ± 0.0064` (Diff: `+0.0309`, > 3 std)
+  - **MLP Classifier**: Protocol C F1 `0.9129 ± 0.0082` vs. Protocol D F1 `0.9192 ± 0.0056` (Diff: `+0.0064`, within std)
+
+### Step 4: Report Updates (`reports/supervised_results.md` & CSV)
+- **Hypothesis Verdict**: Re-evaluated strictly based on D vs. C. Verdict is **SUPPORTED** because random-CV scores are higher than grouped-CV scores across all 5 models, and the difference exceeds 1 standard deviation for 4 out of 5 models (DT by +3.36%, RF by +3.37%, XGBoost by +3.09%, LR by +1.07%).
+- **Protocol A Disclaimer**: Explicitly noted that Protocol A is a single, unrepeated 75-row split (1 sample = 1.33%) and not directly comparable to averaged protocols.
+- **Model Selection Text**: Top model is `Logistic Regression` (`0.9499 ± 0.0060`) and runner-up is `XGBoost` (`0.9451 ± 0.0078`). Difference is `0.0048`, which is within the 1-std bound (`0.0060`). Logistic Regression is selected without self-comparison.
+- **Baseline Fix**: Removed "Phase 1 Historical" label from the computed majority-class baseline.
+- **Expanded Limitations**: Added notes on 0 conflicting groups (100% theoretical ceiling), cohort limited to 132 unique profiles, and inability of exact-duplicate grouping to eliminate near-duplicates.
+
+### Step 5: Unit Tests
+- Added `test_protocol_d_split_and_pipeline` in `tests/test_supervised.py`:
+  - Verifies `run_protocol_d` operates without `groups`.
+  - Verifies `StratifiedKFold` splits do not require groups while pipeline preprocessor fits strictly on train folds.
+- Executed `pytest -v`: **15 passed in 4.31s**.
+
+
 
 
 

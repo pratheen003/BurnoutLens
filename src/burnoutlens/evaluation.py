@@ -11,7 +11,7 @@ from sklearn.metrics import (
     f1_score,
     precision_recall_fscore_support,
 )
-from sklearn.model_selection import StratifiedGroupKFold, train_test_split
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold, train_test_split
 
 from burnoutlens.config import LABELS
 from burnoutlens.modeling import INT_TO_LABEL, LABEL_TO_INT, make_pipeline
@@ -282,6 +282,75 @@ def run_protocol_c(
         "repeated_results": repeated_results,
         "oof_predictions": oof_predictions,
         "y_true": y.to_numpy(),
+    }
+
+
+def run_protocol_d(
+    models: Dict[str, Any],
+    X: pd.DataFrame,
+    y: pd.Series,
+    groups: Optional[pd.Series] = None,
+    seeds: List[int] = list(range(5)),
+) -> Dict[str, Any]:
+    """Protocol D: Random (Non-Grouped) 5-Fold Cross-Validation Control.
+
+    Uses StratifiedKFold(n_splits=5, shuffle=True) across seeds (0-4) with the same
+    clean Pipeline and same 5 models as Protocol C.
+    The split does not require groups. If groups are provided, measures per-fold contamination:
+    count and fraction of validation rows whose dup_group appears in the training fold.
+    """
+    twin_counts_per_fold: List[int] = []
+    twin_pcts_per_fold: List[float] = []
+
+    repeated_summary: Dict[str, Dict[str, List[float]]] = {
+        name: {"accuracies": [], "macro_f1s": []} for name in models
+    }
+
+    for seed in seeds:
+        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
+
+        # Measure twin contamination across folds if groups provided
+        if groups is not None:
+            for train_idx, val_idx in skf.split(X, y):
+                g_train = set(groups.iloc[train_idx])
+                g_val = groups.iloc[val_idx]
+                twins = int(g_val.isin(g_train).sum())
+                twin_counts_per_fold.append(twins)
+                twin_pcts_per_fold.append(float(twins / len(val_idx) * 100))
+
+        for name, model in models.items():
+            seed_fold_accs = []
+            seed_fold_f1s = []
+            for train_idx, val_idx in skf.split(X, y):
+                pipe = make_pipeline(model)
+                pipe.fit(X.iloc[train_idx], y.iloc[train_idx])
+                preds = pipe.predict(X.iloc[val_idx])
+                seed_fold_accs.append(accuracy_score(y.iloc[val_idx], preds))
+                seed_fold_f1s.append(f1_score(y.iloc[val_idx], preds, average="macro", zero_division=0))
+            repeated_summary[name]["accuracies"].append(float(np.mean(seed_fold_accs)))
+            repeated_summary[name]["macro_f1s"].append(float(np.mean(seed_fold_f1s)))
+
+    models_summary = {}
+    for name in models:
+        rep_acc = np.array(repeated_summary[name]["accuracies"])
+        rep_f1 = np.array(repeated_summary[name]["macro_f1s"])
+        models_summary[name] = {
+            "mean_accuracy": float(np.mean(rep_acc)),
+            "std_accuracy": float(np.std(rep_acc)),
+            "mean_macro_f1": float(np.mean(rep_f1)),
+            "std_macro_f1": float(np.std(rep_f1)),
+            "seed_accuracies": rep_acc.tolist(),
+            "seed_macro_f1s": rep_f1.tolist(),
+        }
+
+    return {
+        "seeds": seeds,
+        "avg_twin_rows_per_fold": float(np.mean(twin_counts_per_fold)) if twin_counts_per_fold else 0.0,
+        "std_twin_rows_per_fold": float(np.std(twin_counts_per_fold)) if twin_counts_per_fold else 0.0,
+        "avg_twin_pct_per_fold": float(np.mean(twin_pcts_per_fold)) if twin_pcts_per_fold else 0.0,
+        "std_twin_pct_per_fold": float(np.std(twin_pcts_per_fold)) if twin_pcts_per_fold else 0.0,
+        "total_folds_evaluated": len(twin_counts_per_fold),
+        "models": models_summary,
     }
 
 

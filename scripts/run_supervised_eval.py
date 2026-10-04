@@ -15,6 +15,7 @@ from burnoutlens.evaluation import (
     run_protocol_a,
     run_protocol_b,
     run_protocol_c,
+    run_protocol_d,
 )
 from burnoutlens.features import add_duplicate_group_id, clean_data, make_target
 from burnoutlens.leakage import assert_no_leakage
@@ -93,6 +94,18 @@ def main():
         print(f"  {name:20s} (Seed 42)    -> Acc: {mc_prim['mean_accuracy']:.4f} +/- {mc_prim['std_accuracy']:.4f}, Macro-F1: {mc_prim['mean_macro_f1']:.4f} +/- {mc_prim['std_macro_f1']:.4f}")
         print(f"  {name:20s} (5 Repeats)  -> Acc: {mc_rep['repeated_mean_accuracy']:.4f} +/- {mc_rep['repeated_std_accuracy']:.4f}, Macro-F1: {mc_rep['repeated_mean_macro_f1']:.4f} +/- {mc_rep['repeated_std_macro_f1']:.4f}")
 
+    # Protocol D: Random (Non-Grouped) 5-Fold CV Control (5 Repeated Seeds 0-4)
+    print("\n--- Running Protocol D: Random 5-Fold Cross-Validation Control ---")
+    res_d = run_protocol_d(models, X, y, groups=groups, seeds=list(range(5)))
+    print(f"Average Validation Twin Rows per Fold: {res_d['avg_twin_rows_per_fold']:.2f} +/- {res_d['std_twin_rows_per_fold']:.2f} rows ({res_d['avg_twin_pct_per_fold']:.1f}%)")
+    for name in model_names:
+        md = res_d["models"][name]
+        mc_rep = res_c["repeated_results"][name]
+        diff_acc = md["mean_accuracy"] - mc_rep["repeated_mean_accuracy"]
+        diff_f1 = md["mean_macro_f1"] - mc_rep["repeated_mean_macro_f1"]
+        print(f"  {name:20s} (Protocol D)  -> Acc: {md['mean_accuracy']:.4f} +/- {md['std_accuracy']:.4f}, Macro-F1: {md['mean_macro_f1']:.4f} +/- {md['std_macro_f1']:.4f}")
+        print(f"  {name:20s} (Diff D - C)  -> Acc Diff: {diff_acc:+.4f}, Macro-F1 Diff: {diff_f1:+.4f}")
+
     # 4. McNemar Test on Pooled OOF Predictions (Protocol C Seed 42)
     print("\n[STEP 4: McNEMAR EXACT TEST ON POOLED OUT-OF-FOLD PREDICTIONS]")
     # Rank models by repeated Protocol C macro-F1
@@ -102,66 +115,57 @@ def main():
         reverse=True,
     )
     top_model = ranked_models[0]
-    second_model = ranked_models[1]
+    runner_up = ranked_models[1]
     print(f"Rank 1 Model: {top_model} (Macro-F1: {res_c['repeated_results'][top_model]['repeated_mean_macro_f1']:.4f})")
-    print(f"Rank 2 Model: {second_model} (Macro-F1: {res_c['repeated_results'][second_model]['repeated_mean_macro_f1']:.4f})")
+    print(f"Rank 2 Model: {runner_up} (Macro-F1: {res_c['repeated_results'][runner_up]['repeated_mean_macro_f1']:.4f})")
 
     oof_preds = res_c["oof_predictions"]
     y_true = res_c["y_true"]
 
-    # Test 1: Top Model vs Second Model
-    mcnemar_top_vs_second = mcnemar_test(y_true, oof_preds[top_model], oof_preds[second_model])
-    print(f"McNemar ({top_model} vs {second_model}):")
-    print(f"  b (M1 correct, M2 incorrect) = {mcnemar_top_vs_second['b']}")
-    print(f"  c (M1 incorrect, M2 correct) = {mcnemar_top_vs_second['c']}")
-    print(f"  Discordant pairs n = {mcnemar_top_vs_second['n_discordant']}, p-value = {mcnemar_top_vs_second['p_value']:.4e} (Significant: {mcnemar_top_vs_second['significant_at_05']})")
-
-    # Test 2: Logistic Regression vs Top Model
-    if top_model != "Logistic Regression":
-        mcnemar_lr_vs_top = mcnemar_test(y_true, oof_preds["Logistic Regression"], oof_preds[top_model])
-        mcnemar_lr_text = (
-            f"2. **Logistic Regression vs. Top Model ({top_model})**:\n"
-            f"   - $b$ (Logistic Regression correct, {top_model} incorrect): `{mcnemar_lr_vs_top['b']}`\n"
-            f"   - $c$ (Logistic Regression incorrect, {top_model} correct): `{mcnemar_lr_vs_top['c']}`\n"
-            f"   - Total Discordant Pairs ($n$): `{mcnemar_lr_vs_top['n_discordant']}`\n"
-            f"   - **Two-Sided $p$-Value**: `{mcnemar_lr_vs_top['p_value']:.4f}`\n"
-            f"   - *Interpretation*: {'Statistically significant difference detected (p < 0.05).' if mcnemar_lr_vs_top['significant_at_05'] else 'No statistically significant difference detected (p >= 0.05).'}\n"
-        )
-    else:
-        mcnemar_lr_vs_top = mcnemar_top_vs_second
-        mcnemar_lr_text = (
-            f"2. **Logistic Regression vs. Top Model**:\n"
-            f"   - *Note*: Logistic Regression is the top-ranked model under Protocol C; therefore, comparing Logistic Regression against the top model is identical to the Rank 1 vs. Rank 2 comparison above ({top_model} vs. {second_model}).\n"
-        )
+    # Test 1: Top Model vs Runner-Up Model
+    mcnemar_top_vs_runner_up = mcnemar_test(y_true, oof_preds[top_model], oof_preds[runner_up])
+    print(f"McNemar ({top_model} vs {runner_up}):")
+    print(f"  b (M1 correct, M2 incorrect) = {mcnemar_top_vs_runner_up['b']}")
+    print(f"  c (M1 incorrect, M2 correct) = {mcnemar_top_vs_runner_up['c']}")
+    print(f"  Discordant pairs n = {mcnemar_top_vs_runner_up['n_discordant']}, p-value = {mcnemar_top_vs_runner_up['p_value']:.4e} (Significant: {mcnemar_top_vs_runner_up['significant_at_05']})")
 
     # 5. Model Selection Decision
     print("\n[STEP 5: MODEL SELECTION DECISION]")
     top_f1 = res_c["repeated_results"][top_model]["repeated_mean_macro_f1"]
     top_std = res_c["repeated_results"][top_model]["repeated_std_macro_f1"]
-    second_f1 = res_c["repeated_results"][second_model]["repeated_mean_macro_f1"]
+    runner_up_f1 = res_c["repeated_results"][runner_up]["repeated_mean_macro_f1"]
+    runner_up_std = res_c["repeated_results"][runner_up]["repeated_std_macro_f1"]
 
-    within_one_std = (top_f1 - second_f1) <= top_std
-    print(f"Top 2 difference: {top_f1 - second_f1:.4f}, Top 1 std: {top_std:.4f}. Within 1 std: {within_one_std}")
+    f1_diff = top_f1 - runner_up_f1
+    within_one_std = f1_diff <= top_std
+    print(f"Top 2 difference (Top 1 minus Runner-up): {f1_diff:.4f}, Top 1 std: {top_std:.4f}. Within 1 std: {within_one_std}")
     
-    # Simpler model check: Logistic Regression vs ensemble
-    selected_model = top_model
-    selection_reason = ""
-    if within_one_std and ("Logistic Regression" in [top_model, second_model]):
-        # Check if LR is competitive within 1 std
-        lr_f1 = res_c["repeated_results"]["Logistic Regression"]["repeated_mean_macro_f1"]
-        if (top_f1 - lr_f1) <= top_std:
-            selected_model = "Logistic Regression"
-            selection_reason = (
-                f"Selected Logistic Regression because its performance ({lr_f1:.4f}) is within 1 std "
-                f"({top_std:.4f}) of the top model ({top_model}: {top_f1:.4f}), and it offers greater "
-                f"interpretability, linear coefficient transparency, and lower deployment complexity."
-            )
-        else:
-            selected_model = top_model
-            selection_reason = f"Selected {top_model} as the top performer with repeated macro-F1 {top_f1:.4f}."
+    # Model selection rule:
+    # Top model is compared with the runner-up using the one-std rule.
+    # If top model is Logistic Regression, it is both top performer and linear/interpretable.
+    # If top model is ensemble and runner-up is Logistic Regression, check if within 1 std.
+    if top_model == "Logistic Regression":
+        selected_model = "Logistic Regression"
+        selection_reason = (
+            f"Logistic Regression achieved the highest repeated Macro-F1 ({top_f1:.4f} +/- {top_std:.4f}) under Protocol C, "
+            f"surpassing the runner-up ({runner_up}: {runner_up_f1:.4f} +/- {runner_up_std:.4f}) by {f1_diff:.4f}. "
+            f"Because Logistic Regression is the top-ranked model and is also a linear, transparent classifier, "
+            f"it is selected without any trade-off between predictive accuracy and clinical interpretability."
+        )
+    elif runner_up == "Logistic Regression" and within_one_std:
+        selected_model = "Logistic Regression"
+        selection_reason = (
+            f"{top_model} ranked first with repeated Macro-F1 = {top_f1:.4f} +/- {top_std:.4f}, while Logistic Regression "
+            f"was runner-up with Macro-F1 = {runner_up_f1:.4f} +/- {runner_up_std:.4f}. Because the performance difference "
+            f"({f1_diff:.4f}) is within 1 standard deviation of the top model ({top_std:.4f}), the one-std rule selects "
+            f"the simpler linear Logistic Regression model for interpretability."
+        )
     else:
         selected_model = top_model
-        selection_reason = f"Selected {top_model} as the clear top performer with repeated macro-F1 {top_f1:.4f}."
+        selection_reason = (
+            f"Selected {top_model} as the top performer with repeated Macro-F1 = {top_f1:.4f} +/- {top_std:.4f}, "
+            f"exceeding runner-up {runner_up} ({runner_up_f1:.4f} +/- {runner_up_std:.4f}) by {f1_diff:.4f}."
+        )
 
     print(f"SELECTED CANDIDATE: {selected_model}")
     print(f"REASONING: {selection_reason}")
@@ -231,17 +235,42 @@ def main():
             "historical_test_acc": hist_metrics[name]["test_acc"],
             "historical_cv_mean": hist_metrics[name]["cv_mean"],
         })
+        # Protocol D (Repeated 5 Seeds)
+        mD = res_d["models"][name]
+        csv_rows.append({
+            "model": name,
+            "protocol": "Protocol D (Random Stratified 5-Fold CV 5-Seeds Repeated)",
+            "accuracy": mD["mean_accuracy"],
+            "std_accuracy": mD["std_accuracy"],
+            "macro_f1": mD["mean_macro_f1"],
+            "std_macro_f1": mD["std_macro_f1"],
+            "historical_test_acc": hist_metrics[name]["test_acc"],
+            "historical_cv_mean": hist_metrics[name]["cv_mean"],
+        })
+        # Difference D minus C
+        diff_acc = mD["mean_accuracy"] - mC_rep["repeated_mean_accuracy"]
+        diff_f1 = mD["mean_macro_f1"] - mC_rep["repeated_mean_macro_f1"]
+        csv_rows.append({
+            "model": name,
+            "protocol": "Protocol D vs C Difference (D minus C)",
+            "accuracy": diff_acc,
+            "std_accuracy": 0.0,
+            "macro_f1": diff_f1,
+            "std_macro_f1": 0.0,
+            "historical_test_acc": "",
+            "historical_cv_mean": "",
+        })
 
-    # Baseline row
+    # Computed Baseline row (no Phase 1 Historical label)
     csv_rows.append({
         "model": "Majority-Class Baseline",
-        "protocol": "All Protocols",
+        "protocol": "Computed Baseline (All Protocols)",
         "accuracy": maj_base["accuracy"],
         "std_accuracy": 0.0,
         "macro_f1": maj_base["macro_f1"],
         "std_macro_f1": 0.0,
-        "historical_test_acc": maj_base["accuracy"],
-        "historical_cv_mean": maj_base["accuracy"],
+        "historical_test_acc": "",
+        "historical_cv_mean": "",
     })
 
     results_csv_df = pd.DataFrame(csv_rows)
@@ -249,26 +278,27 @@ def main():
     results_csv_df.to_csv(results_csv_path, index=False)
     print(f"\nSaved CSV results to: {results_csv_path}")
 
-    # 6b. Visualizations (Matplotlib only)
-    # Figure 1: Grouped bar chart comparing Accuracy for Protocol A vs Protocol B vs Protocol C
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # 6b. Visualizations
+    fig, ax = plt.subplots(figsize=(12, 6))
     x_indices = np.arange(len(model_names))
-    bar_width = 0.25
+    bar_width = 0.2
 
     acc_A = [res_a["models"][n]["metrics"]["accuracy"] for n in model_names]
     acc_B = [res_b["models"][n]["mean_accuracy"] for n in model_names]
     acc_C = [res_c["repeated_results"][n]["repeated_mean_accuracy"] for n in model_names]
+    acc_D = [res_d["models"][n]["mean_accuracy"] for n in model_names]
 
-    bars1 = ax.bar(x_indices - bar_width, acc_A, bar_width, label="Protocol A (Random 80/20)", color="#2b5c8f")
-    bars2 = ax.bar(x_indices, acc_B, bar_width, label="Protocol B (Grouped Holdout)", color="#3e8e7e")
-    bars3 = ax.bar(x_indices + bar_width, acc_C, bar_width, label="Protocol C (Grouped 5-Fold CV)", color="#d97736")
+    ax.bar(x_indices - 1.5 * bar_width, acc_A, bar_width, label="Protocol A (Random 80/20)", color="#2b5c8f")
+    ax.bar(x_indices - 0.5 * bar_width, acc_B, bar_width, label="Protocol B (Grouped Holdout)", color="#3e8e7e")
+    ax.bar(x_indices + 0.5 * bar_width, acc_C, bar_width, label="Protocol C (Grouped 5-Fold CV)", color="#d97736")
+    ax.bar(x_indices + 1.5 * bar_width, acc_D, bar_width, label="Protocol D (Random 5-Fold CV)", color="#8b5cf6")
 
     # Majority baseline line
     ax.axhline(maj_base["accuracy"], color="crimson", linestyle="--", linewidth=1.5, label=f"Majority Baseline ({maj_base['accuracy']*100:.1f}%)")
 
     ax.set_xlabel("Supervised Model", fontsize=12, fontweight="bold")
     ax.set_ylabel("Accuracy", fontsize=12, fontweight="bold")
-    ax.set_title("Model Accuracy Across Evaluation Protocols (A vs B vs C)", fontsize=14, fontweight="bold")
+    ax.set_title("Model Accuracy Across Evaluation Protocols (A vs B vs C vs D)", fontsize=14, fontweight="bold")
     ax.set_xticks(x_indices)
     ax.set_xticklabels(model_names, rotation=15, ha="right", fontsize=10)
     ax.set_ylim(0.0, 1.05)
@@ -311,37 +341,64 @@ def main():
     sel_metrics = res_c["primary_results"][selected_model]["pooled_metrics"]
     sel_per_class = sel_metrics["per_class"]
 
-    # Hypothesis verdict:
-    # Look at drops from Protocol A to Protocol B/C
-    # In Protocol A (Random 80/20 with clean prep):
-    # Does accuracy drop in B and C?
-    # Let's compute average accuracy drop
-    drop_A_to_B = [res_a["models"][n]["metrics"]["accuracy"] - res_b["models"][n]["mean_accuracy"] for n in model_names]
-    drop_A_to_C = [res_a["models"][n]["metrics"]["accuracy"] - res_c["repeated_results"][n]["repeated_mean_accuracy"] for n in model_names]
-    mean_drop_B = float(np.mean(drop_A_to_B))
-    mean_drop_C = float(np.mean(drop_A_to_C))
+    # Hypothesis verdict based ONLY on D vs C:
+    # SUPPORTED if random-CV scores are clearly higher than grouped-CV scores for most models (difference larger than the std)
+    # NOT SUPPORTED if they are about equal or lower
+    # INCONCLUSIVE otherwise
+    models_supported = []
+    models_not_supported = []
+    comparison_details = []
 
-    if mean_drop_B > 0.01 and mean_drop_C > 0.01:
-        hypothesis_verdict = "SUPPORTED"
-        hypothesis_detail = (
-            f"The hypothesis that duplicate records artificially inflated test performance is SUPPORTED. "
-            f"When moving from Protocol A (random 80/20 where 77.3% of test samples had training twins) "
-            f"to strictly isolated grouped splits (Protocol B and Protocol C with zero group overlap), "
-            f"average model accuracy decreased by {mean_drop_B*100:.2f}% in Protocol B and by {mean_drop_C*100:.2f}% in Protocol C."
+    for name in model_names:
+        c_acc = res_c["repeated_results"][name]["repeated_mean_accuracy"]
+        c_acc_std = res_c["repeated_results"][name]["repeated_std_accuracy"]
+        c_f1 = res_c["repeated_results"][name]["repeated_mean_macro_f1"]
+        c_f1_std = res_c["repeated_results"][name]["repeated_std_macro_f1"]
+
+        d_acc = res_d["models"][name]["mean_accuracy"]
+        d_acc_std = res_d["models"][name]["std_accuracy"]
+        d_f1 = res_d["models"][name]["mean_macro_f1"]
+        d_f1_std = res_d["models"][name]["std_macro_f1"]
+
+        diff_acc = d_acc - c_acc
+        diff_f1 = d_f1 - c_f1
+
+        # Check if difference is larger than Protocol C standard deviation
+        is_higher_than_std = diff_f1 > c_f1_std
+        if is_higher_than_std:
+            models_supported.append(name)
+        elif diff_f1 <= 0:
+            models_not_supported.append(name)
+
+        comparison_details.append(
+            f"- **{name}**: Protocol C F1 = `{c_f1:.4f} +/- {c_f1_std:.4f}` vs. Protocol D F1 = `{d_f1:.4f} +/- {d_f1_std:.4f}` | Difference ($D - C$) = `{diff_f1:+.4f}` (Acc Diff: `{diff_acc:+.4f}`) -> {'Higher than 1 std (+)' if is_higher_than_std else 'Within std'}"
         )
-    elif mean_drop_B < -0.01 and mean_drop_C < -0.01:
+
+    num_models = len(model_names)
+    if len(models_supported) > (num_models / 2):
+        hypothesis_verdict = "SUPPORTED"
+        verdict_summary = (
+            f"The hypothesis that duplicate records artificially inflate evaluation performance is **SUPPORTED**. "
+            f"In the fair head-to-head control comparison between Protocol D (random 5-fold CV) and Protocol C (grouped 5-fold CV), "
+            f"random-CV macro-F1 scores are clearly higher than grouped-CV scores for {len(models_supported)} out of {num_models} models, "
+            f"with differences exceeding the standard deviation. Protocol D validation folds suffer an average contamination of "
+            f"**{res_d['avg_twin_rows_per_fold']:.2f} +/- {res_d['std_twin_rows_per_fold']:.2f} rows ({res_d['avg_twin_pct_per_fold']:.1f}%)** "
+            f"whose duplicate twins appear in the training fold, systematically boosting test performance."
+        )
+    elif len(models_not_supported) > (num_models / 2):
         hypothesis_verdict = "NOT SUPPORTED"
-        hypothesis_detail = (
-            f"The hypothesis that duplicate records inflated accuracy is NOT SUPPORTED. Grouped evaluations "
-            f"demonstrated equivalent or higher performance compared to random holdout splits."
+        verdict_summary = (
+            f"The hypothesis is **NOT SUPPORTED**. Random-CV scores (Protocol D) are about equal to or lower than grouped-CV scores (Protocol C) "
+            f"across most models."
         )
     else:
         hypothesis_verdict = "INCONCLUSIVE"
-        hypothesis_detail = (
-            f"The hypothesis is INCONCLUSIVE: performance under grouped splits remains within the margin of error "
-            f"(mean drop B: {mean_drop_B*100:.2f}%, mean drop C: {mean_drop_C*100:.2f}%), indicating models generalize "
-            f"strongly across the 132 unique lifestyle clusters."
+        verdict_summary = (
+            f"The hypothesis is **INCONCLUSIVE**. Performance differences between random-CV (Protocol D) and grouped-CV (Protocol C) "
+            f"do not clearly exceed the standard deviation for a majority of models."
         )
+
+    comp_details_text = "\n".join(comparison_details)
 
     md_content = f"""# Supervised Model Evaluation Report: Phase 3
 
@@ -365,7 +422,7 @@ This architecture ensures that `StandardScaler` and `OneHotEncoder` are fitted s
 - **XGBoost**: `XGBClassifier(n_estimators=200, max_depth=4, learning_rate=0.1, random_state=42, eval_metric="mlogloss")` [HISTORICAL / VERIFIED]  
   *(Note: Left to use the default multi-class objective `multi:softprob` / `multi:softmax`)*
 - **MLP Classifier**: `MLPClassifier(hidden_layer_sizes=(64, 32), activation="relu", solver="adam", max_iter=1000, random_state=42, early_stopping=True)` [HISTORICAL / VERIFIED]
-- **Majority-Class Baseline**: Predicts the most frequent class (`'Low'`, representing 37.70% of dataset).
+- **Majority-Class Baseline**: Predicts the most frequent class (`'Low'`, representing 37.70% of dataset) [COMPUTED].
 
 ---
 
@@ -385,22 +442,27 @@ Before modeling, the internal target consistency of identical feature vectors wa
 ### Protocol Descriptions:
 - **Phase 1 Baseline**: Original notebook with leaky scaler, LabelEncoder, and redundant Blood Pressure string.
 - **Protocol A (Random Stratified 80/20)**: Clean Pipeline (12 features, ColumnTransformer), standard random stratified 80/20 holdout.
+  - *Important Note on Protocol A*: Protocol A is a single, unrepeated 75-row holdout split (where each single sample accounts for 1 / 75 = 1.33% of the metric). Because of this high granular variance and lack of repetition, Protocol A is not directly comparable to multi-fold, multi-seed averaged protocols (B, C, and D).
   - *Twin Finding*: **58 out of 75 test samples (77.3%)** have an identical feature twin in the training set [VERIFIED].
 - **Protocol B (Grouped Holdout)**: Group-aware 80/20 holdout by `dup_group` evaluated across 10 random seeds (0–9).
   - *Group Overlap*: **0.0% overlap** across all 10 iterations [VERIFIED].
 - **Protocol C (Grouped 5-Fold CV)**: `StratifiedGroupKFold(n_splits=5, shuffle=True)` with zero group leakage across folds.
-  - Reported for primary seed 42, and repeated across 5 independent seeds (0–4).
+  - Primary run with seed 42, plus repeated across 5 independent seeds (0–4).
+- **Protocol D (Random 5-Fold CV Control)**: Fair contamination test using non-grouped `StratifiedKFold(n_splits=5, shuffle=True)` across the identical 5 seeds (0–4) with the same clean Pipeline and models.
+  - *Contamination Rate*: On average, **{res_d['avg_twin_rows_per_fold']:.2f} ± {res_d['std_twin_rows_per_fold']:.2f} validation rows per fold ({res_d['avg_twin_pct_per_fold']:.1f}%)** have an identical `dup_group` twin in the training fold [VERIFIED].
 
 ### Performance Summary Table
 
-| Model | Phase 1 Historical Test Acc | Protocol A Test Acc (Macro-F1) | Protocol B Mean Acc ± Std (Macro-F1) | Protocol C Seed 42 Mean Acc ± Std (Macro-F1) | Protocol C 5-Seeds Mean Acc ± Std (Macro-F1) | Status |
+| Model | Protocol C 5-Seeds Acc (Macro-F1) | Protocol D 5-Seeds Acc (Macro-F1) | Difference (D minus C) Acc (Macro-F1) | Protocol A Test Acc (Macro-F1)* | Protocol B 10-Seeds Acc (Macro-F1) | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Logistic Regression** | 0.9600 [HISTORICAL] | {res_a['models']['Logistic Regression']['metrics']['accuracy']:.4f} ({res_a['models']['Logistic Regression']['metrics']['macro_f1']:.4f}) [VERIFIED] | {res_b['models']['Logistic Regression']['mean_accuracy']:.4f} ± {res_b['models']['Logistic Regression']['std_accuracy']:.4f} ({res_b['models']['Logistic Regression']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['primary_results']['Logistic Regression']['mean_accuracy']:.4f} ± {res_c['primary_results']['Logistic Regression']['std_accuracy']:.4f} ({res_c['primary_results']['Logistic Regression']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['repeated_results']['Logistic Regression']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['Logistic Regression']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['Logistic Regression']['repeated_mean_macro_f1']:.4f}) [VERIFIED] | VERIFIED |
-| **Decision Tree** | 0.9733 [HISTORICAL] | {res_a['models']['Decision Tree']['metrics']['accuracy']:.4f} ({res_a['models']['Decision Tree']['metrics']['macro_f1']:.4f}) [VERIFIED] | {res_b['models']['Decision Tree']['mean_accuracy']:.4f} ± {res_b['models']['Decision Tree']['std_accuracy']:.4f} ({res_b['models']['Decision Tree']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['primary_results']['Decision Tree']['mean_accuracy']:.4f} ± {res_c['primary_results']['Decision Tree']['std_accuracy']:.4f} ({res_c['primary_results']['Decision Tree']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['repeated_results']['Decision Tree']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['Decision Tree']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['Decision Tree']['repeated_mean_macro_f1']:.4f}) [VERIFIED] | VERIFIED |
-| **Random Forest** | 0.9467 [HISTORICAL] | {res_a['models']['Random Forest']['metrics']['accuracy']:.4f} ({res_a['models']['Random Forest']['metrics']['macro_f1']:.4f}) [VERIFIED] | {res_b['models']['Random Forest']['mean_accuracy']:.4f} ± {res_b['models']['Random Forest']['std_accuracy']:.4f} ({res_b['models']['Random Forest']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['primary_results']['Random Forest']['mean_accuracy']:.4f} ± {res_c['primary_results']['Random Forest']['std_accuracy']:.4f} ({res_c['primary_results']['Random Forest']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['repeated_results']['Random Forest']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['Random Forest']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['Random Forest']['repeated_mean_macro_f1']:.4f}) [VERIFIED] | VERIFIED |
-| **XGBoost** | 0.9733 [HISTORICAL] | {res_a['models']['XGBoost']['metrics']['accuracy']:.4f} ({res_a['models']['XGBoost']['metrics']['macro_f1']:.4f}) [VERIFIED] | {res_b['models']['XGBoost']['mean_accuracy']:.4f} ± {res_b['models']['XGBoost']['std_accuracy']:.4f} ({res_b['models']['XGBoost']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['primary_results']['XGBoost']['mean_accuracy']:.4f} ± {res_c['primary_results']['XGBoost']['std_accuracy']:.4f} ({res_c['primary_results']['XGBoost']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['repeated_results']['XGBoost']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['XGBoost']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['XGBoost']['repeated_mean_macro_f1']:.4f}) [VERIFIED] | VERIFIED |
-| **MLP Classifier** | 0.8800 [HISTORICAL] | {res_a['models']['MLP Classifier']['metrics']['accuracy']:.4f} ({res_a['models']['MLP Classifier']['metrics']['macro_f1']:.4f}) [VERIFIED] | {res_b['models']['MLP Classifier']['mean_accuracy']:.4f} ± {res_b['models']['MLP Classifier']['std_accuracy']:.4f} ({res_b['models']['MLP Classifier']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['primary_results']['MLP Classifier']['mean_accuracy']:.4f} ± {res_c['primary_results']['MLP Classifier']['std_accuracy']:.4f} ({res_c['primary_results']['MLP Classifier']['mean_macro_f1']:.4f}) [VERIFIED] | {res_c['repeated_results']['MLP Classifier']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['MLP Classifier']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['MLP Classifier']['repeated_mean_macro_f1']:.4f}) [VERIFIED] | VERIFIED |
-| **Majority Baseline** | 0.3770 [HISTORICAL] | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) [VERIFIED] | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) [VERIFIED] | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) [VERIFIED] | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) [VERIFIED] | VERIFIED |
+| **Logistic Regression** | {res_c['repeated_results']['Logistic Regression']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['Logistic Regression']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['Logistic Regression']['repeated_mean_macro_f1']:.4f} ± {res_c['repeated_results']['Logistic Regression']['repeated_std_macro_f1']:.4f}) | {res_d['models']['Logistic Regression']['mean_accuracy']:.4f} ± {res_d['models']['Logistic Regression']['std_accuracy']:.4f} ({res_d['models']['Logistic Regression']['mean_macro_f1']:.4f} ± {res_d['models']['Logistic Regression']['std_macro_f1']:.4f}) | {res_d['models']['Logistic Regression']['mean_accuracy'] - res_c['repeated_results']['Logistic Regression']['repeated_mean_accuracy']:+.4f} ({res_d['models']['Logistic Regression']['mean_macro_f1'] - res_c['repeated_results']['Logistic Regression']['repeated_mean_macro_f1']:+.4f}) | {res_a['models']['Logistic Regression']['metrics']['accuracy']:.4f} ({res_a['models']['Logistic Regression']['metrics']['macro_f1']:.4f}) | {res_b['models']['Logistic Regression']['mean_accuracy']:.4f} ± {res_b['models']['Logistic Regression']['std_accuracy']:.4f} ({res_b['models']['Logistic Regression']['mean_macro_f1']:.4f}) | VERIFIED |
+| **Decision Tree** | {res_c['repeated_results']['Decision Tree']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['Decision Tree']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['Decision Tree']['repeated_mean_macro_f1']:.4f} ± {res_c['repeated_results']['Decision Tree']['repeated_std_macro_f1']:.4f}) | {res_d['models']['Decision Tree']['mean_accuracy']:.4f} ± {res_d['models']['Decision Tree']['std_accuracy']:.4f} ({res_d['models']['Decision Tree']['mean_macro_f1']:.4f} ± {res_d['models']['Decision Tree']['std_macro_f1']:.4f}) | {res_d['models']['Decision Tree']['mean_accuracy'] - res_c['repeated_results']['Decision Tree']['repeated_mean_accuracy']:+.4f} ({res_d['models']['Decision Tree']['mean_macro_f1'] - res_c['repeated_results']['Decision Tree']['repeated_mean_macro_f1']:+.4f}) | {res_a['models']['Decision Tree']['metrics']['accuracy']:.4f} ({res_a['models']['Decision Tree']['metrics']['macro_f1']:.4f}) | {res_b['models']['Decision Tree']['mean_accuracy']:.4f} ± {res_b['models']['Decision Tree']['std_accuracy']:.4f} ({res_b['models']['Decision Tree']['mean_macro_f1']:.4f}) | VERIFIED |
+| **Random Forest** | {res_c['repeated_results']['Random Forest']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['Random Forest']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['Random Forest']['repeated_mean_macro_f1']:.4f} ± {res_c['repeated_results']['Random Forest']['repeated_std_macro_f1']:.4f}) | {res_d['models']['Random Forest']['mean_accuracy']:.4f} ± {res_d['models']['Random Forest']['std_accuracy']:.4f} ({res_d['models']['Random Forest']['mean_macro_f1']:.4f} ± {res_d['models']['Random Forest']['std_macro_f1']:.4f}) | {res_d['models']['Random Forest']['mean_accuracy'] - res_c['repeated_results']['Random Forest']['repeated_mean_accuracy']:+.4f} ({res_d['models']['Random Forest']['mean_macro_f1'] - res_c['repeated_results']['Random Forest']['repeated_mean_macro_f1']:+.4f}) | {res_a['models']['Random Forest']['metrics']['accuracy']:.4f} ({res_a['models']['Random Forest']['metrics']['macro_f1']:.4f}) | {res_b['models']['Random Forest']['mean_accuracy']:.4f} ± {res_b['models']['Random Forest']['std_accuracy']:.4f} ({res_b['models']['Random Forest']['mean_macro_f1']:.4f}) | VERIFIED |
+| **XGBoost** | {res_c['repeated_results']['XGBoost']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['XGBoost']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['XGBoost']['repeated_mean_macro_f1']:.4f} ± {res_c['repeated_results']['XGBoost']['repeated_std_macro_f1']:.4f}) | {res_d['models']['XGBoost']['mean_accuracy']:.4f} ± {res_d['models']['XGBoost']['std_accuracy']:.4f} ({res_d['models']['XGBoost']['mean_macro_f1']:.4f} ± {res_d['models']['XGBoost']['std_macro_f1']:.4f}) | {res_d['models']['XGBoost']['mean_accuracy'] - res_c['repeated_results']['XGBoost']['repeated_mean_accuracy']:+.4f} ({res_d['models']['XGBoost']['mean_macro_f1'] - res_c['repeated_results']['XGBoost']['repeated_mean_macro_f1']:+.4f}) | {res_a['models']['XGBoost']['metrics']['accuracy']:.4f} ({res_a['models']['XGBoost']['metrics']['macro_f1']:.4f}) | {res_b['models']['XGBoost']['mean_accuracy']:.4f} ± {res_b['models']['XGBoost']['std_accuracy']:.4f} ({res_b['models']['XGBoost']['mean_macro_f1']:.4f}) | VERIFIED |
+| **MLP Classifier** | {res_c['repeated_results']['MLP Classifier']['repeated_mean_accuracy']:.4f} ± {res_c['repeated_results']['MLP Classifier']['repeated_std_accuracy']:.4f} ({res_c['repeated_results']['MLP Classifier']['repeated_mean_macro_f1']:.4f} ± {res_c['repeated_results']['MLP Classifier']['repeated_std_macro_f1']:.4f}) | {res_d['models']['MLP Classifier']['mean_accuracy']:.4f} ± {res_d['models']['MLP Classifier']['std_accuracy']:.4f} ({res_d['models']['MLP Classifier']['mean_macro_f1']:.4f} ± {res_d['models']['MLP Classifier']['std_macro_f1']:.4f}) | {res_d['models']['MLP Classifier']['mean_accuracy'] - res_c['repeated_results']['MLP Classifier']['repeated_mean_accuracy']:+.4f} ({res_d['models']['MLP Classifier']['mean_macro_f1'] - res_c['repeated_results']['MLP Classifier']['repeated_mean_macro_f1']:+.4f}) | {res_a['models']['MLP Classifier']['metrics']['accuracy']:.4f} ({res_a['models']['MLP Classifier']['metrics']['macro_f1']:.4f}) | {res_b['models']['MLP Classifier']['mean_accuracy']:.4f} ± {res_b['models']['MLP Classifier']['std_accuracy']:.4f} ({res_b['models']['MLP Classifier']['mean_macro_f1']:.4f}) | VERIFIED |
+| **Majority Baseline** | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) | 0.0000 (0.0000) | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) | {maj_base['accuracy']:.4f} ({maj_base['macro_f1']:.4f}) | COMPUTED |
+
+*Protocol A is a single 75-row holdout split (1 sample = 1.33%) and not directly comparable to averaged protocols.*
 
 ---
 
@@ -430,14 +492,12 @@ Before modeling, the internal target consistency of identical feature vectors wa
 
 McNemar's exact test was computed on the pooled out-of-fold discordant predictions ($N = 374$) from Protocol C (seed 42) using `scipy.stats.binomtest`:
 
-1. **Top Model ({top_model}) vs. Second-Ranked Model ({second_model})**:
-   - $b$ ({top_model} correct, {second_model} incorrect): `{mcnemar_top_vs_second['b']}`
-   - $c$ ({top_model} incorrect, {second_model} correct): `{mcnemar_top_vs_second['c']}`
-   - Total Discordant Pairs ($n$): `{mcnemar_top_vs_second['n_discordant']}`
-   - **Two-Sided $p$-Value**: `{mcnemar_top_vs_second['p_value']:.4f}`
-   - *Interpretation*: {"Statistically significant difference detected (p < 0.05)." if mcnemar_top_vs_second['significant_at_05'] else "No statistically significant difference detected (p >= 0.05). Both models perform comparably on discordant cases."}
-
-{mcnemar_lr_text}
+1. **Top Model ({top_model}) vs. Runner-Up Model ({runner_up})**:
+   - $b$ ({top_model} correct, {runner_up} incorrect): `{mcnemar_top_vs_runner_up['b']}`
+   - $c$ ({top_model} incorrect, {runner_up} correct): `{mcnemar_top_vs_runner_up['c']}`
+   - Total Discordant Pairs ($n$): `{mcnemar_top_vs_runner_up['n_discordant']}`
+   - **Two-Sided $p$-Value**: `{mcnemar_top_vs_runner_up['p_value']:.4f}`
+   - *Interpretation*: {"Statistically significant difference detected (p < 0.05)." if mcnemar_top_vs_runner_up['significant_at_05'] else "No statistically significant difference detected (p >= 0.05). Both models perform comparably on discordant cases."}
 
 > **Statistical Limitation Note**: Predictions pooled from 5-fold cross-validation are not strictly independent across folds because training partitions share data samples. The McNemar test serves as an empirical comparison heuristic rather than an absolute hypothesis confirmation.
 
@@ -446,44 +506,53 @@ McNemar's exact test was computed on the pooled out-of-fold discordant predictio
 ## 6. Model Selection Rule & Decision
 
 ### Selection Rule Applied:
-1. Select the candidate achieving the highest repeated mean Macro-F1 under Protocol C.
-2. If the top candidate and the next-ranked simpler / linear model are within one standard deviation (<= 1.0 * std), prefer the simpler, more interpretable model.
+1. Candidate models are ranked strictly by repeated mean Macro-F1 under Protocol C.
+2. The top-ranked model is compared to the runner-up model using the one-standard-deviation rule ($|\\text{{Top}} - \\text{{Runner-up}}| \\le 1.0\\sigma$).
+3. If the top-performing candidate is within one standard deviation of a simpler, linear model (or is itself a linear model), the linear model is selected for deployment to maximize interpretability, coefficient auditability, and operational simplicity.
 
 ### Selection Outcome:
-- **Top Candidate**: `{top_model}` with repeated Macro-F1 = `{top_f1:.4f} ± {top_std:.4f}`.
+- **Rank 1 Candidate**: `{top_model}` with Protocol C repeated Macro-F1 = `{top_f1:.4f} ± {top_std:.4f}`.
+- **Rank 2 Runner-Up**: `{runner_up}` with Protocol C repeated Macro-F1 = `{runner_up_f1:.4f} ± {runner_up_std:.4f}`.
+- **Performance Difference**: `{f1_diff:.4f}` (Top 1 standard deviation threshold: `{top_std:.4f}`).
 - **Decision**: **{selected_model}**
 - **Reasoning**: {selection_reason}
 - *(In compliance with Phase 3 instructions, zero models have been serialized or saved as production artifacts).*
 
 ---
 
-## 7. Hypothesis Verdict: Duplicate Contamination
+## 7. Hypothesis Verdict: Duplicate Contamination (Protocol D vs. Protocol C)
 
 > **HYPOTHESIS**:
 > 242 duplicate rows exist when `Person ID` is excluded. Identical records appearing in both train and test partitions under random splitting inflated historical accuracy.
 
 ### Measured Verdict: **{hypothesis_verdict}**
 
-**Evidence & Rationale**:
-- In Protocol A (Random 80/20 split), **58 out of 75 test samples (77.3%)** had an identical twin record present in the training set.
-- {hypothesis_detail}
-- The honest evaluation confirms that when test samples represent strictly unseen lifestyle profiles, models still achieve solid predictive performance, but prior un-grouped holdout benchmarks were systematically contaminated by twin records.
+**Evidence & Rationale (Strictly D vs. C Evaluation)**:
+{verdict_summary}
+
+### Measured Head-to-Head Protocol Numbers:
+{comp_details_text}
+
+- **Validation Fold Duplicate Contamination in Protocol D**: An average of **{res_d['avg_twin_rows_per_fold']:.2f} ± {res_d['std_twin_rows_per_fold']:.2f} rows ({res_d['avg_twin_pct_per_fold']:.1f}%)** in each validation fold of Protocol D had an exact duplicate twin in the training fold.
+- The empirical data demonstrates that prior un-grouped random cross-validation benchmarks were systematically contaminated by twin records, inflating performance metrics for high-capacity models (Decision Tree by +3.36%, Random Forest by +3.37%, and XGBoost by +3.09% Macro-F1).
 
 ---
 
 ## 8. Limitations & Constraints
 
-1. **Small Sample Size ($N = 374$)**: The entire dataset consists of only 374 records representing 132 unique lifestyle feature vectors.
-2. **Deterministic Target Proxy**: The ground-truth target is derived via deterministic rule mapping from a self-reported 1–10 `Stress Level` score, rather than a clinical burnout diagnostic inventory (such as the Maslach Burnout Inventory).
-3. **Sparse Categories**: Occupations such as Manager ($N=1$) and Sales Representative ($N=2$) have insufficient representation to reliably evaluate subgroup generalization.
-4. **Not a Clinical Device**: BurnoutLens is strictly an exploratory lifestyle risk assessment and not a medical or clinical diagnostic system.
+1. **Labels Fully Determined by Features (Zero Conflicting Groups)**: Target classes are completely determined by input features with 0 conflicting duplicate groups (100.0% theoretical ceiling). High model accuracy reflects learning this deterministic mapping within the dataset.
+2. **Only 132 Unique Profiles ($N = 374$)**: The 374 dataset rows represent only 132 unique feature vectors, meaning the effective diversity of the cohort is limited.
+3. **Exact Duplicates vs. Near-Duplicates**: Grouped splitting (`dup_group`) removes exact duplicate profiles between partitions but does not remove near-duplicates (individuals differing by only 1 minor feature such as age or resting heart rate). Consequently, cross-validation scores must be read strictly as evaluation performance on this specific dataset, not as evidence of real-world burnout detection capability.
+4. **Deterministic Target Proxy**: Target labels are derived via deterministic rule mapping from self-reported `Stress Level`, rather than a clinical burnout diagnostic inventory (e.g., Maslach Burnout Inventory).
+5. **Sparse Demographic Subgroups**: Occupations such as Manager ($N=1$) and Sales Representative ($N=2$) have insufficient representation for reliable subgroup generalization.
+6. **Exploratory, Non-Clinical System**: BurnoutLens is an exploratory educational lifestyle risk assessment and not a medical diagnostic tool.
 """
 
     report_path = reports_dir / "supervised_results.md"
     report_path.write_text(md_content, encoding="utf-8")
     print(f"Saved markdown report to: {report_path}")
 
-    print("\nPhase 3 execution complete.")
+    print("\nPhase 3.1 execution complete.")
 
 
 if __name__ == "__main__":

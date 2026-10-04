@@ -101,3 +101,38 @@ def test_pipeline_preprocessor_fit_on_train_only(dataset_fixtures):
 
     # Must NOT equal full dataset mean (verifying scaler didn't leak full data)
     assert not np.allclose(fitted_means, full_dataset_means, rtol=1e-3)
+
+
+def test_protocol_d_split_and_pipeline(dataset_fixtures):
+    """Test that Protocol D split does not require groups and fits preprocessing on train folds only."""
+    from sklearn.model_selection import StratifiedKFold
+    from burnoutlens.evaluation import run_protocol_d
+
+    X, y, groups = dataset_fixtures
+
+    # 1. Verify run_protocol_d executes successfully without groups
+    lr_model = {"Logistic Regression": get_models()["Logistic Regression"]}
+    res_d_no_groups = run_protocol_d(lr_model, X, y, groups=None, seeds=[0])
+    assert "Logistic Regression" in res_d_no_groups["models"]
+    assert res_d_no_groups["avg_twin_rows_per_fold"] == 0.0
+
+    # 2. Verify StratifiedKFold split does not require groups and fits preprocessor on train only
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    for fold, (train_idx, val_idx) in enumerate(skf.split(X, y)):
+        X_tr = X.iloc[train_idx]
+        y_tr = y.iloc[train_idx]
+        X_val = X.iloc[val_idx]
+
+        pipe = make_pipeline(get_models()["Logistic Regression"])
+        pipe.fit(X_tr, y_tr)
+
+        fitted_means = pipe.named_steps["prep"].named_transformers_["num"].mean_
+        expected_means = X_tr[NUMERIC_FEATURES].mean().to_numpy()
+        full_means = X[NUMERIC_FEATURES].mean().to_numpy()
+
+        np.testing.assert_allclose(fitted_means, expected_means, rtol=1e-5)
+        assert not np.allclose(fitted_means, full_means, rtol=1e-3)
+
+        preds = pipe.predict(X_val)
+        assert len(preds) == len(val_idx)
+
