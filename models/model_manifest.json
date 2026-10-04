@@ -1,0 +1,88 @@
+{
+  "manifest_version": "1.0",
+  "created_at_utc": "2026-10-04T12:41:18.529204+00:00",
+  "runtime_environment": {
+    "python_version": "3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]",
+    "scikit_learn_version": "1.9.1",
+    "numpy_version": "2.5.3",
+    "pandas_version": "3.0.6",
+    "shap_version": "0.52.0"
+  },
+  "dataset": {
+    "raw_csv_filename": "Sleep_health_and_lifestyle_dataset.csv",
+    "raw_csv_sha256": "1efe7b6f781ff88078d08d81fe136cff98b1b0c32560f35f8650ca5984b77841",
+    "n_training_rows": 374,
+    "n_unique_profile_rows": 132
+  },
+  "selected_model": {
+    "name": "Logistic Regression (StandardScaler + OneHotEncoder)",
+    "pipeline_specification": "build_preprocessor() + LogisticRegression(max_iter=1000, random_state=42)",
+    "selection_reason": "Selected in Phase 3 for highest generalization Macro-F1 (0.9499) under 5-seed repeated grouped 5-fold cross-validation without leakage, high explainability, and minimal parameter complexity compared to tree ensembles."
+  },
+  "feature_order": [
+    "Gender",
+    "Age",
+    "Occupation",
+    "Sleep Duration",
+    "Quality of Sleep",
+    "Physical Activity Level",
+    "BMI Category",
+    "Heart Rate",
+    "Daily Steps",
+    "Sleep Disorder",
+    "Systolic BP",
+    "Diastolic BP"
+  ],
+  "behavioral_feature_order": [
+    "Sleep Duration",
+    "Quality of Sleep",
+    "Physical Activity Level",
+    "Daily Steps",
+    "Heart Rate"
+  ],
+  "class_mapping": {
+    "Low": 0,
+    "Medium": 1,
+    "High": 2
+  },
+  "cross_validation_metrics": {
+    "protocol_c_grouped_cv": {
+      "protocol_name": "Protocol C (Grouped 5-Fold CV 5-Seeds Repeated)",
+      "accuracy": 0.9512642958748222,
+      "std_accuracy": 0.0057480746785074,
+      "macro_f1": 0.949906183328196,
+      "std_macro_f1": 0.0060372723977431
+    },
+    "protocol_d_random_cv": {
+      "protocol_name": "Protocol D (Random Stratified 5-Fold CV 5-Seeds Repeated)",
+      "accuracy": 0.9614630630630632,
+      "std_accuracy": 0.0027861799069962,
+      "macro_f1": 0.9606335293232042,
+      "std_macro_f1": 0.0032027439920342
+    },
+    "evaluation_note": "There is no held-out score for the all-data model; reported numbers come from cross-validation."
+  },
+  "disclaimer": "Lifestyle-based burnout risk estimate for educational purposes. Not a medical diagnosis. There is no held-out score for the all-data model; reported numbers come from cross-validation.",
+  "artifacts": [
+    {
+      "filename": "burnout_pipeline.joblib",
+      "size_bytes": 5249,
+      "sha256": "40645413c9c57d0de12847ec0cfc75cf2a93f11b9ef37efb219a19e95f26c26c"
+    },
+    {
+      "filename": "explain_background.json",
+      "size_bytes": 1557,
+      "sha256": "339ab1bcde9a04c0e96c15bceda44ed9315b038263490704db22f6dac267f3e4"
+    },
+    {
+      "filename": "behavior_clusters.joblib",
+      "size_bytes": 4145,
+      "sha256": "e4ebeb771f1462e2fa752294b3c3190c3cbb642c62abdbbc44f7c5e9ebd5a495"
+    },
+    {
+      "filename": "pca_points_variant_b.json",
+      "size_bytes": 14006,
+      "sha256": "9383f6766191157805bde2a4a71841f30c1d309eb01ab8c8d45c26764503fd82"
+    }
+  ]
+}

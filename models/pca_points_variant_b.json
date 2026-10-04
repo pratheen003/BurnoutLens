@@ -1,0 +1,794 @@
+[
+  {
+    "pc1": -2.548072,
+    "pc2": -1.155865,
+    "cluster_id": 2,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.730104,
+    "pc2": 1.792998,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -4.843554,
+    "pc2": -1.512287,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -4.843554,
+    "pc2": -1.512287,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -3.048347,
+    "pc2": -1.284125,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 0.558443,
+    "pc2": 0.97675,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.596079,
+    "pc2": -0.293916,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.669744,
+    "pc2": -0.284768,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -3.151149,
+    "pc2": -1.12823,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.669744,
+    "pc2": -0.284768,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -3.151149,
+    "pc2": -1.12823,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 0.411113,
+    "pc2": 0.995047,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.484778,
+    "pc2": 0.985899,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.558443,
+    "pc2": 0.97675,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.632109,
+    "pc2": 0.967602,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -3.026589,
+    "pc2": -1.343525,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -3.026589,
+    "pc2": -1.343525,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 1.192012,
+    "pc2": 0.343928,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -2.01458,
+    "pc2": -1.4668,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 0.484778,
+    "pc2": 0.985899,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.411113,
+    "pc2": 0.995047,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.558443,
+    "pc2": 0.97675,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.484778,
+    "pc2": 0.985899,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.595572,
+    "pc2": -0.051987,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -2.088245,
+    "pc2": -1.457652,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 0.411113,
+    "pc2": 0.995047,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.484778,
+    "pc2": 0.985899,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.940914,
+    "pc2": -1.475948,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 0.591414,
+    "pc2": -0.385251,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -2.088245,
+    "pc2": -1.457652,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -2.208683,
+    "pc2": -0.398739,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -2.01458,
+    "pc2": -1.4668,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -2.088245,
+    "pc2": -1.457652,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -4.295413,
+    "pc2": -0.705304,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.69921,
+    "pc2": -1.100508,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.724389,
+    "pc2": 0.444487,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.677292,
+    "pc2": -0.054269,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.907567,
+    "pc2": -1.055954,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.981232,
+    "pc2": -1.065102,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.797792,
+    "pc2": -0.76955,
+    "cluster_id": 2,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.677292,
+    "pc2": -0.054269,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.603627,
+    "pc2": -0.04512,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.677292,
+    "pc2": -0.054269,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.603627,
+    "pc2": -0.04512,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.677292,
+    "pc2": -0.054269,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -2.366353,
+    "pc2": -1.26734,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 0.677292,
+    "pc2": -0.054269,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -2.366353,
+    "pc2": -1.26734,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -2.548072,
+    "pc2": -1.155865,
+    "cluster_id": 2,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.205163,
+    "pc2": 0.221824,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.885773,
+    "pc2": 0.352206,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.677292,
+    "pc2": -0.054269,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.724389,
+    "pc2": 0.444487,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.812108,
+    "pc2": 0.361354,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.603627,
+    "pc2": -0.04512,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.664777,
+    "pc2": 0.379651,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.664777,
+    "pc2": 0.379651,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.797792,
+    "pc2": -0.76955,
+    "cluster_id": 2,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.738443,
+    "pc2": 0.370502,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -3.151149,
+    "pc2": -1.12823,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.059741,
+    "pc2": -0.576726,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 2.102231,
+    "pc2": 0.632947,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 0.738443,
+    "pc2": 0.370502,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.065073,
+    "pc2": 0.161244,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.511735,
+    "pc2": 1.299412,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.055688,
+    "pc2": 1.428286,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 0.317815,
+    "pc2": 0.130607,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -0.486321,
+    "pc2": -0.36929,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.129354,
+    "pc2": 1.419138,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.055688,
+    "pc2": 1.428286,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.529951,
+    "pc2": -0.582148,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 1.203019,
+    "pc2": 1.40999,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -2.075255,
+    "pc2": -0.730077,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.044186,
+    "pc2": -1.018681,
+    "cluster_id": 3,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.677282,
+    "pc2": -0.563852,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.529951,
+    "pc2": -0.582148,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.603616,
+    "pc2": -0.573,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 1.203019,
+    "pc2": 1.40999,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -0.816618,
+    "pc2": -0.364872,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 1.088541,
+    "pc2": 0.320658,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.129354,
+    "pc2": 1.419138,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.203019,
+    "pc2": 1.40999,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": 1.203019,
+    "pc2": 1.40999,
+    "cluster_id": 0,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.529951,
+    "pc2": -0.582148,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.117852,
+    "pc2": -1.009533,
+    "cluster_id": 3,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.603616,
+    "pc2": -0.573,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.677282,
+    "pc2": -0.563852,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.191517,
+    "pc2": -1.000385,
+    "cluster_id": 3,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.559496,
+    "pc2": -0.793311,
+    "cluster_id": 2,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.603616,
+    "pc2": -0.573,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.529951,
+    "pc2": -0.582148,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.099338,
+    "pc2": -1.524303,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -0.191517,
+    "pc2": -1.000385,
+    "cluster_id": 3,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -0.117852,
+    "pc2": -1.009533,
+    "cluster_id": 3,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -0.117852,
+    "pc2": -1.009533,
+    "cluster_id": 3,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.016802,
+    "pc2": -0.411235,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.698763,
+    "pc2": -0.560671,
+    "cluster_id": 2,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.693466,
+    "pc2": 2.813391,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.47247,
+    "pc2": 2.785946,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.619801,
+    "pc2": 2.804242,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.546135,
+    "pc2": 2.795094,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.47247,
+    "pc2": 2.785946,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.246511,
+    "pc2": 0.138736,
+    "cluster_id": 2,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.546135,
+    "pc2": 2.795094,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 1.976011,
+    "pc2": -2.212768,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -1.619801,
+    "pc2": 2.804242,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.546135,
+    "pc2": 2.795094,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.619801,
+    "pc2": 2.804242,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 2.123342,
+    "pc2": -2.231064,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": -0.486321,
+    "pc2": -0.36929,
+    "cluster_id": 3,
+    "burnout_risk": "Medium"
+  },
+  {
+    "pc1": -1.619801,
+    "pc2": 2.804242,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.546135,
+    "pc2": 2.795094,
+    "cluster_id": 1,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -1.014192,
+    "pc2": -0.645383,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": -0.940527,
+    "pc2": -0.654531,
+    "cluster_id": 3,
+    "burnout_risk": "High"
+  },
+  {
+    "pc1": 2.049677,
+    "pc2": -2.221916,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.976011,
+    "pc2": -2.212768,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.123342,
+    "pc2": -2.231064,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.049677,
+    "pc2": -2.221916,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.976011,
+    "pc2": -2.212768,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.049677,
+    "pc2": -2.221916,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.123342,
+    "pc2": -2.231064,
+    "cluster_id": 4,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.392456,
+    "pc2": -0.350048,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.723365,
+    "pc2": 1.906131,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.984857,
+    "pc2": 0.296636,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.058522,
+    "pc2": 0.287488,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.984857,
+    "pc2": 0.296636,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.911192,
+    "pc2": 0.305784,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.911192,
+    "pc2": 0.305784,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.984857,
+    "pc2": 0.296636,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 2.058522,
+    "pc2": 0.287488,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.911192,
+    "pc2": 0.305784,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  },
+  {
+    "pc1": 1.984857,
+    "pc2": 0.296636,
+    "cluster_id": 0,
+    "burnout_risk": "Low"
+  }
+]
