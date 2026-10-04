@@ -164,4 +164,74 @@
   ```
 - **Error Analysis**: Authentication requires interactive GitHub login credentials (Personal Access Token or GitHub CLI / SSH key). Execution stopped per Step 7 instructions.
 
+---
+
+## 2026-10-04 - Phase 2: Modular Preprocessing & Feature Engineering
+
+### Scope & Constraints
+- Implement clean, reusable, importable preprocessing pipeline without model training or metric reporting.
+- Phase 1 baseline files in `src/recovery/` kept frozen.
+- Raw CSV and notebook kept untouched.
+- Duplicate rows measured and tracked via `dup_group`; zero rows deleted in Phase 2.
+
+### Step 0: Inspection & Clean Tree Check
+- Command: `git status; git branch` -> Branch `main`, working tree clean.
+
+### Step 1: Package Creation (`src/burnoutlens/`)
+- Created package `src/burnoutlens/` with `__init__.py`:
+  - `config.py`: Defined `RAW_CSV_PATH`, `TARGET_COL="Burnout Risk"`, `LABELS=["Low","Medium","High"]`, target thresholds (4 and 6), `NUMERIC_FEATURES` (8 features), `CATEGORICAL_FEATURES` (4 features), `INPUT_FEATURES` (12 features), `FORBIDDEN_COLUMNS` (7 forbidden columns). Explicitly corrected feature count from 13 to 12 by dropping redundant raw `Blood Pressure` string.
+  - `data.py`: `load_raw()` loading raw CSV with `keep_default_na=False` so `"None"` in `Sleep Disorder` is preserved. Never mutates or writes to disk.
+  - `features.py`:
+    - `clean_data(df)`: Immutably strips whitespace, decomposes and drops `Blood Pressure`, normalizes `"Normal Weight"` to `"Normal"`, drops `"Person ID"`.
+    - `make_target(df)`: Generates target series (`"Low"`, `"Medium"`, `"High"`).
+    - `compute_lifestyle_score(df)`: Replicates exact notebook lifestyle formula for analytics only.
+    - `add_duplicate_group_id(df)`: Assigns deterministic sha256 hash to `dup_group` across input features (yields 132 unique groups out of 374 rows; zero rows deleted).
+  - `preprocessing.py`: `build_preprocessor()` returning unfitted `ColumnTransformer` with `StandardScaler` for numeric features and `OneHotEncoder(handle_unknown="ignore", sparse_output=False)` for categorical features. Supports `get_feature_names_out()`.
+  - `leakage.py`: `assert_no_leakage(X)` raising `ValueError` if any `FORBIDDEN_COLUMNS` are present.
+
+### Step 2: Input Schema Generation (`src/burnoutlens/schema.py`)
+- Created `src/burnoutlens/schema.py` and generated `reports/feature_schema.json` directly from the raw dataset:
+  - 8 numeric features with empirically derived min, max, and median values.
+  - 4 categorical features with allowed categories and empirical category counts:
+    - `Gender`: `["Female", "Male"]`
+    - `Occupation`: 11 categories
+    - `BMI Category`: `["Normal", "Obese", "Overweight"]`
+    - `Sleep Disorder`: `["Insomnia", "None", "Sleep Apnea"]`
+
+### Step 3: Unit & Integration Tests (`tests/test_preprocessing.py`)
+- Created `tests/test_preprocessing.py` and `pytest.ini`.
+- Command: `.\venv\Scripts\pytest.exe -v`
+- Output:
+  ```text
+  ============================= test session starts =============================
+  platform win32 -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0 -- D:\BurnoutLens\venv\Scripts\python.exe
+  cachedir: .pytest_cache
+  rootdir: D:\BurnoutLens
+  configfile: pytest.ini
+  testpaths: tests
+  plugins: anyio-4.15.1
+  collecting ... collected 10 items
+
+  tests/test_preprocessing.py::test_clean_data_shape_and_columns PASSED    [ 10%]
+  tests/test_preprocessing.py::test_target_counts PASSED                   [ 20%]
+  tests/test_preprocessing.py::test_bmi_normalization PASSED               [ 30%]
+  tests/test_preprocessing.py::test_sleep_disorder_values PASSED           [ 40%]
+  tests/test_preprocessing.py::test_blood_pressure_split_and_drop PASSED   [ 50%]
+  tests/test_preprocessing.py::test_assert_no_leakage PASSED               [ 60%]
+  tests/test_preprocessing.py::test_immutability_and_raw_integrity PASSED  [ 70%]
+  tests/test_preprocessing.py::test_preprocessor_unfitted_and_transform PASSED [ 80%]
+  tests/test_preprocessing.py::test_duplicate_group_id PASSED              [ 90%]
+  tests/test_preprocessing.py::test_compute_lifestyle_score_hand_checkable PASSED [100%]
+
+  ============================= 10 passed in 3.12s ==============================
+  ```
+
+### Step 4: Preprocessing Specification
+- Authored `reports/preprocessing_spec.md` with:
+  - Phase 1 baseline vs. Phase 2 design comparison table.
+  - Explicit documentation of the 13 -> 12 feature count reduction.
+  - Full schema summary and hand-checkable calculations.
+  - Statements labeled [VERIFIED], [HYPOTHESIS], and [FUTURE].
+
+
 

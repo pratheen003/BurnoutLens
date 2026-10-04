@@ -1,0 +1,149 @@
+{
+  "metadata": {
+    "source_dataset": "data/raw/Sleep_health_and_lifestyle_dataset.csv",
+    "total_records_derived_from": 374,
+    "num_input_features": 12,
+    "feature_list": [
+      "Gender",
+      "Age",
+      "Occupation",
+      "Sleep Duration",
+      "Quality of Sleep",
+      "Physical Activity Level",
+      "BMI Category",
+      "Heart Rate",
+      "Daily Steps",
+      "Sleep Disorder",
+      "Systolic BP",
+      "Diastolic BP"
+    ]
+  },
+  "features": {
+    "Age": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 27.0,
+      "max": 59.0,
+      "median": 43.0
+    },
+    "Sleep Duration": {
+      "type": "numeric",
+      "dtype": "float64",
+      "min": 5.8,
+      "max": 8.5,
+      "median": 7.2
+    },
+    "Quality of Sleep": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 4.0,
+      "max": 9.0,
+      "median": 7.0
+    },
+    "Physical Activity Level": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 30.0,
+      "max": 90.0,
+      "median": 60.0
+    },
+    "Heart Rate": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 65.0,
+      "max": 86.0,
+      "median": 70.0
+    },
+    "Daily Steps": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 3000.0,
+      "max": 10000.0,
+      "median": 7000.0
+    },
+    "Systolic BP": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 115.0,
+      "max": 142.0,
+      "median": 130.0
+    },
+    "Diastolic BP": {
+      "type": "numeric",
+      "dtype": "int64",
+      "min": 75.0,
+      "max": 95.0,
+      "median": 85.0
+    },
+    "Gender": {
+      "type": "categorical",
+      "dtype": "string",
+      "allowed_categories": [
+        "Female",
+        "Male"
+      ],
+      "category_counts": {
+        "Male": 189,
+        "Female": 185
+      }
+    },
+    "Occupation": {
+      "type": "categorical",
+      "dtype": "string",
+      "allowed_categories": [
+        "Accountant",
+        "Doctor",
+        "Engineer",
+        "Lawyer",
+        "Manager",
+        "Nurse",
+        "Sales Representative",
+        "Salesperson",
+        "Scientist",
+        "Software Engineer",
+        "Teacher"
+      ],
+      "category_counts": {
+        "Nurse": 73,
+        "Doctor": 71,
+        "Engineer": 63,
+        "Lawyer": 47,
+        "Teacher": 40,
+        "Accountant": 37,
+        "Salesperson": 32,
+        "Software Engineer": 4,
+        "Scientist": 4,
+        "Sales Representative": 2,
+        "Manager": 1
+      }
+    },
+    "BMI Category": {
+      "type": "categorical",
+      "dtype": "string",
+      "allowed_categories": [
+        "Normal",
+        "Obese",
+        "Overweight"
+      ],
+      "category_counts": {
+        "Normal": 216,
+        "Overweight": 148,
+        "Obese": 10
+      }
+    },
+    "Sleep Disorder": {
+      "type": "categorical",
+      "dtype": "string",
+      "allowed_categories": [
+        "Insomnia",
+        "None",
+        "Sleep Apnea"
+      ],
+      "category_counts": {
+        "None": 219,
+        "Sleep Apnea": 78,
+        "Insomnia": 77
+      }
+    }
+  }
+}
