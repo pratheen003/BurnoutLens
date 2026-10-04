@@ -551,3 +551,61 @@
   - `test_explainability_determinism`
 - Executed `pytest -v`: **27 passed in 12.50s** (22 existing + 5 new).
 
+
+## Phase 6 & 7: Model Serialization, Prediction Service, and FastAPI Backend
+
+### Step 0: Explainability Documentation Refinements & Warning Audit
+- Replaced heuristic permutation stability labels in `reports/explainability.md` and `scripts/run_explainability.py` with explicit data rule: `"clearly above zero" if mean > 2*std, else "not distinguishable from zero"`.
+- Under this rule, only `Quality of Sleep` (0.1719 > 0.0946) and `Sleep Duration` (0.1421 > 0.0512) are clearly above zero; all remaining features are not distinguishable from zero.
+- Replaced interpretive phrases (`Cardiovascular Strain` -> `Activity and Vitals`, `Demographic/Baseline` -> `Demographic/Context` or `Health Indicator`).
+- Added boxed warning note detailing the 10,000-step nurse cohort dataset artifact (94% nurses, 100% high risk) and identifying `Gender`, `Age`, and `Occupation` as non-actionable context variables.
+- Replaced "independently confirm" with "agree".
+- Identified the 3 pytest warnings: `PendingDeprecationWarning` in `shap/plots/colors/_colors.py` lines 47, 48, 49 (`set_bad`, `set_over`, `set_under` deprecated in Matplotlib colormaps).
+- Commit: `bcd82db` ("docs: tighten explainability claims").
+
+### Step 1: Model Serialization (`scripts/train_final_model.py`)
+- Fit the Phase 3 selected pipeline (`build_preprocessor()` + `LogisticRegression(max_iter=1000, random_state=42)`) on all 374 cleaned rows with explicit target mapping (`Low: 0, Medium: 1, High: 2`). Saved `models/burnout_pipeline.joblib` (5,249 bytes).
+- Computed background mean vector of transformed features over the 132 unique-profile rows (27 floats) without storing raw dataset rows. Saved `models/explain_background.json` (1,557 bytes).
+- Fit Variant B behavioral clustering (`StandardScaler`, `KMeans(n_clusters=5, random_state=42, n_init=10)`, `PCA(n_components=2, random_state=42)`) on 5 behavioral features. Asserted cluster sizes equal `[178, 34, 22, 108, 32]` and confirmed cluster IDs match `reports/cluster_profiles.json`. Saved `models/behavior_clusters.joblib` (4,145 bytes).
+- Generated 2D PCA projection coordinates, cluster assignments, and ground-truth risk labels for the 132 unique survey records. Saved `models/pca_points_variant_b.json` (14,006 bytes).
+- Generated `models/model_manifest.json` (3,211 bytes) containing runtime dependencies, raw CSV sha256 (`1efe7b6f781ff88078d08d81fe136cff98b1b0c32560f35f8650ca5984b77841`), selection justification, artifact hashes, and evaluation metrics dynamically extracted from `reports/supervised_results.csv` (Protocol C macro-F1: 0.9499, Protocol D macro-F1: 0.9606). Explicitly stated that no held-out score exists for the all-data model.
+
+### Step 2: Prediction Service (`src/burnoutlens/service.py`)
+- Implemented `BurnoutService` class with artifact resolution strictly relative to package directory (`Path(__file__).resolve().parent`).
+- Implemented version-check warning comparing runtime `sklearn` against manifest serialized version.
+- Implemented snake_case to canonical column mapping and schema validation against `reports/feature_schema.json` with clear `ServiceValidationError` messages (translated to HTTP 422).
+- Implemented `predict()` providing predicted risk class, uncalibrated model probabilities, and small-dataset calibration disclaimer.
+- Implemented `contributions()` using exact linear mean-vector formulation $\phi_j = w_j(x_j - \bar{x}_j)$ on the `decision_function` scale, aggregated to the 12 original features. Grouped features into `lifestyle`, `health_indicator`, and `context`.
+- Implemented `cluster()` returning Variant B cluster ID, human descriptive label, profile statistics, and 2D PCA user coordinates.
+- Implemented `recommendations()` with static rule-based wellness guidelines (sleep duration < 7h, sleep quality <= 6, always including professional support recommendation). No rules for steps, activity, HR, BP, or BMI.
+- Verified all service requirements with 9 comprehensive unit tests in `tests/test_service.py`.
+- Commit: `cd15a14` ("feat: add prediction service").
+
+### Step 3: FastAPI Backend (`src/burnoutlens/api.py`)
+- Implemented FastAPI service with endpoints:
+  - `GET /health`: Operational health check.
+  - `GET /meta`: Schema ranges, sanitized manifest summary, disclaimer, and analytical limitations.
+  - `POST /predict`: End-to-end inference, SHAP local attributions, cluster assignment, and wellness text.
+  - `GET /analytics/clusters`: Variant B cluster profiles and 132 PCA coordinate projections.
+  - `GET /analytics/importance`: Global SHAP importance, permutation drops, and tree cross-checks.
+  - `GET /models/comparison`: Protocol C and D benchmark comparison across models from `reports/supervised_results.csv`.
+- Configured CORS middleware restricting origins to localhost ports (3000, 5173, 8000, 8080).
+- Mounted conditional static mount for `frontend/` directory (if present).
+- Installed and pinned `httpx==0.28.1`, `httpcore==1.0.9`, `certifi==2026.7.22` in `requirements.txt`.
+- Created `tests/test_api.py` covering all 6 endpoints, validation errors (unseen occupation, out-of-range age, missing fields, forbidden columns), and disclaimer verification. All 12 API tests passed.
+- Total test suite status: **48 passed in 13.36s** (27 existing + 9 service + 12 API).
+
+### Step 4: Live Smoke Test
+- Started background uvicorn server (`uvicorn burnoutlens.api:app --app-dir src --port 8000`).
+- From a distinct working directory (`d:\BurnoutLens\reports`), executed live HTTP calls using PowerShell `Invoke-RestMethod`:
+  - `GET /health` -> `200 OK`
+  - `POST /predict` on Low-Risk worked example (Accountant, 44, F) -> `200 OK` ($P(\text{Low}) = 92.34\%$, cluster 0)
+  - `POST /predict` on Medium-Risk worked example (Software Engineer, 27, M) -> `200 OK` ($P(\text{Medium}) = 69.22\%$, cluster 2)
+  - `POST /predict` on High-Risk worked example (Nurse, 28, F) -> `200 OK` ($P(\text{High}) = 97.77\%$, cluster 1)
+- Cleanly terminated background uvicorn server process.
+
+### Step 5: Documentation & Git Versioning
+- Authored `docs/API.md` documenting server launch command, endpoint specifications, JSON schemas, live smoke test payload/response examples, and safety constraints.
+- Created commit: `"feat: add FastAPI backend"`.
+
+
