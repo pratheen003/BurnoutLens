@@ -15,6 +15,9 @@ This report provides global and local model explainability for the selected Phas
    The 27 one-hot transformed columns are linearly collapsed into the 12 original features by summing their signed SHAP contributions, strictly preserving additivity:
    $$\sum_{i \in \text{transformed}(f)} \phi_i = \phi_f$$
 
+> [!WARNING]
+> **Dataset Artifact Notice**: In this dataset, higher Daily Steps and Physical Activity are associated with HIGHER predicted risk (the 10,000-step cluster is 94% nurses and 100% High risk); this is a dataset artifact, not advice. Gender, Age and Occupation are context variables, not actionable.
+
 ### Installed Package Versions & Output Shapes:
 - **`shap` Version**: `0.52.0`
 - **`xgboost` Version**: `3.4.1`
@@ -45,9 +48,9 @@ The Logistic Regression classifier fits independent linear equations for each cl
 | 10 | `Occupation_Lawyer`: **-0.6887** | `Systolic BP`: **+0.4658** | `Occupation_Accountant`: **+0.5541** |
 
 ### Key Coefficient Insights:
-- **Low Risk**: Strongly driven by higher `Quality of Sleep` (+2.435) and female gender (+0.954), contrasted against elevated `Daily Steps` (-1.420) and `Heart Rate` (-1.214).
-- **Medium Risk**: Dominated by occupation and baseline stability (`Occupation_Lawyer` +0.984, `Sleep Duration` +0.932, `Sleep Disorder_None` +0.825).
-- **High Risk**: Heavily penalized by lower `Quality of Sleep` (-2.007) and shorter `Sleep Duration` (-1.635), and driven higher by `Daily Steps` (+1.260), `Heart Rate` (+0.877), and `Age` (+0.800).
+- **Low Risk**: Positively weighted on higher `Quality of Sleep` (+2.435) and female gender (+0.954), with negative weights on `Daily Steps` (-1.420) and `Heart Rate` (-1.214).
+- **Medium Risk**: Highest weights on occupation and baseline stability (`Occupation_Lawyer` +0.984, `Sleep Duration` +0.932, `Sleep Disorder_None` +0.825).
+- **High Risk**: Negative weights on `Quality of Sleep` (-2.007) and `Sleep Duration` (-1.635), and positive weights on `Daily Steps` (+1.260), `Heart Rate` (+0.877), and `Age` (+0.800).
 
 ---
 
@@ -61,16 +64,16 @@ SHAP values were computed across all 374 rows using `shap.LinearExplainer` and a
 |:---:|:---|:---:|:---:|:---:|:---:|:---|
 | 1 | **Quality of Sleep** | **1.4057** | 2.1086 | 0.3707 | 1.7379 | Low/High Sleep Separation |
 | 2 | **Sleep Duration** | **0.9553** | 0.6157 | 0.8173 | 1.4330 | Low/High Sleep Separation |
-| 3 | **Daily Steps** | **0.7911** | 1.1867 | 0.1336 | 1.0530 | Cardiovascular Strain |
-| 4 | **Heart Rate** | **0.6573** | 0.9860 | 0.2737 | 0.7123 | Cardiovascular Strain |
-| 5 | **Gender** | **0.6325** | 0.9487 | 0.3131 | 0.6357 | Demographic/Baseline |
-| 6 | **Physical Activity Level** | **0.5113** | 0.2363 | 0.5306 | 0.7669 | Demographic/Baseline |
-| 7 | **Age** | **0.4464** | 0.2973 | 0.3723 | 0.6696 | Demographic/Baseline |
-| 8 | **Sleep Disorder** | **0.4314** | 0.1526 | 0.6073 | 0.5344 | Demographic/Baseline |
-| 9 | **Systolic BP** | **0.4015** | 0.6023 | 0.3834 | 0.2189 | Demographic/Baseline |
-| 10 | **Occupation** | **0.3216** | 0.3147 | 0.3632 | 0.2868 | Demographic/Baseline |
-| 11 | **BMI Category** | **0.2800** | 0.4200 | 0.0673 | 0.3527 | Demographic/Baseline |
-| 12 | **Diastolic BP** | **0.1416** | 0.1746 | 0.0378 | 0.2124 | Demographic/Baseline |
+| 3 | **Daily Steps** | **0.7911** | 1.1867 | 0.1336 | 1.0530 | Activity and Vitals |
+| 4 | **Heart Rate** | **0.6573** | 0.9860 | 0.2737 | 0.7123 | Activity and Vitals |
+| 5 | **Gender** | **0.6325** | 0.9487 | 0.3131 | 0.6357 | Demographic/Context |
+| 6 | **Physical Activity Level** | **0.5113** | 0.2363 | 0.5306 | 0.7669 | Activity and Vitals |
+| 7 | **Age** | **0.4464** | 0.2973 | 0.3723 | 0.6696 | Demographic/Context |
+| 8 | **Sleep Disorder** | **0.4314** | 0.1526 | 0.6073 | 0.5344 | Health Indicator |
+| 9 | **Systolic BP** | **0.4015** | 0.6023 | 0.3834 | 0.2189 | Health Indicator |
+| 10 | **Occupation** | **0.3216** | 0.3147 | 0.3632 | 0.2868 | Demographic/Context |
+| 11 | **BMI Category** | **0.2800** | 0.4200 | 0.0673 | 0.3527 | Health Indicator |
+| 12 | **Diastolic BP** | **0.1416** | 0.1746 | 0.0378 | 0.2124 | Health Indicator |
 
 ![Global SHAP Importance](figures/shap_global_importance.png)
 ![SHAP Importance by Class](figures/shap_by_class.png)
@@ -79,31 +82,33 @@ SHAP values were computed across all 374 rows using `shap.LinearExplainer` and a
 
 ## 4. Held-Out Cross-Check: Permutation Importance
 
-To confirm that SHAP importance is not an artifact of in-sample collinearity, we computed **held-out permutation importance** across validation folds using 5-fold `StratifiedGroupKFold` (`groups=dup_group`, 10 repeats, scoring: `macro-F1`). Features were permuted in their original form prior to the pipeline.
+To assess whether held-out generalization and SHAP importance agree and ensure rankings are not an artifact of in-sample collinearity, we computed **held-out permutation importance** across validation folds using 5-fold `StratifiedGroupKFold` (`groups=dup_group`, 10 repeats, scoring: `macro-F1`). Features were permuted in their original form prior to the pipeline.
 
 ### Permutation Importance Table:
 
-| Rank | Feature | Mean Macro-F1 Drop | Std Dev | Stability Across Folds |
+Data Rule for Stability: "clearly above zero" if mean > 2*std, else "not distinguishable from zero".
+
+| Rank | Feature | Mean Macro-F1 Drop | Std Dev | Stability Across Folds (mean > 2*std) |
 |:---:|:---|:---:|:---:|:---|
-| 1 | **Quality of Sleep** | **+0.1719** | 0.0473 | High impact |
-| 2 | **Sleep Duration** | **+0.1421** | 0.0256 | High impact |
-| 3 | **Gender** | **+0.0578** | 0.0531 | High impact |
-| 4 | **Heart Rate** | **+0.0558** | 0.0362 | High impact |
-| 5 | **Daily Steps** | **+0.0433** | 0.0314 | Moderate impact |
-| 6 | **Physical Activity Level** | **+0.0245** | 0.0446 | Moderate impact |
-| 7 | **Systolic BP** | **+0.0107** | 0.0270 | Moderate impact |
-| 8 | **Age** | **+0.0059** | 0.0048 | Low / negligible |
-| 9 | **Occupation** | **+0.0010** | 0.0122 | Low / negligible |
-| 10 | **Sleep Disorder** | **-0.0001** | 0.0094 | Low / negligible |
-| 11 | **BMI Category** | **-0.0025** | 0.0040 | Low / negligible |
-| 12 | **Diastolic BP** | **-0.0067** | 0.0089 | Low / negligible |
+| 1 | **Quality of Sleep** | **+0.1719** | 0.0473 | clearly above zero |
+| 2 | **Sleep Duration** | **+0.1421** | 0.0256 | clearly above zero |
+| 3 | **Gender** | **+0.0578** | 0.0531 | not distinguishable from zero |
+| 4 | **Heart Rate** | **+0.0558** | 0.0362 | not distinguishable from zero |
+| 5 | **Daily Steps** | **+0.0433** | 0.0314 | not distinguishable from zero |
+| 6 | **Physical Activity Level** | **+0.0245** | 0.0446 | not distinguishable from zero |
+| 7 | **Systolic BP** | **+0.0107** | 0.0270 | not distinguishable from zero |
+| 8 | **Age** | **+0.0059** | 0.0048 | not distinguishable from zero |
+| 9 | **Occupation** | **+0.0010** | 0.0122 | not distinguishable from zero |
+| 10 | **Sleep Disorder** | **-0.0001** | 0.0094 | not distinguishable from zero |
+| 11 | **BMI Category** | **-0.0025** | 0.0040 | not distinguishable from zero |
+| 12 | **Diastolic BP** | **-0.0067** | 0.0089 | not distinguishable from zero |
 
 ![Permutation Importance](figures/permutation_importance.png)
 
 ### Correlation Between SHAP and Permutation Importance:
 - **Spearman Rank Correlation ($\rho$)**: **0.9371**
 - **$p$-value**: **6.9932e-06**
-- **Finding**: Extreme agreement ($> 0.93$) between in-sample SHAP values and out-of-fold generalization drops. Both methods identify **`Quality of Sleep`** and **`Sleep Duration`** as the two dominant predictors.
+- **Finding**: Extreme agreement ($> 0.93$) between in-sample SHAP values and out-of-fold generalization drops. Both methods agree that **`Quality of Sleep`** and **`Sleep Duration`** are the two dominant predictors.
 
 ---
 

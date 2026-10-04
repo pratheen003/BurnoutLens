@@ -311,6 +311,9 @@ This report provides global and local model explainability for the selected Phas
    The 27 one-hot transformed columns are linearly collapsed into the 12 original features by summing their signed SHAP contributions, strictly preserving additivity:
    $$\\sum_{{i \\in \\text{{transformed}}(f)}} \\phi_i = \\phi_f$$
 
+> [!WARNING]
+> **Dataset Artifact Notice**: In this dataset, higher Daily Steps and Physical Activity are associated with HIGHER predicted risk (the 10,000-step cluster is 94% nurses and 100% High risk); this is a dataset artifact, not advice. Gender, Age and Occupation are context variables, not actionable.
+
 ### Installed Package Versions & Output Shapes:
 - **`shap` Version**: `{shap_version}`
 - **`xgboost` Version**: `{xgb_version}`
@@ -338,9 +341,9 @@ The Logistic Regression classifier fits independent linear equations for each cl
 
     content += f"""
 ### Key Coefficient Insights:
-- **Low Risk**: Strongly driven by higher `Quality of Sleep` (+2.435) and female gender (+0.954), contrasted against elevated `Daily Steps` (-1.420) and `Heart Rate` (-1.214).
-- **Medium Risk**: Dominated by occupation and baseline stability (`Occupation_Lawyer` +0.984, `Sleep Duration` +0.932, `Sleep Disorder_None` +0.825).
-- **High Risk**: Heavily penalized by lower `Quality of Sleep` (-2.007) and shorter `Sleep Duration` (-1.635), and driven higher by `Daily Steps` (+1.260), `Heart Rate` (+0.877), and `Age` (+0.800).
+- **Low Risk**: Positively weighted on higher `Quality of Sleep` (+2.435) and female gender (+0.954), with negative weights on `Daily Steps` (-1.420) and `Heart Rate` (-1.214).
+- **Medium Risk**: Highest weights on occupation and baseline stability (`Occupation_Lawyer` +0.984, `Sleep Duration` +0.932, `Sleep Disorder_None` +0.825).
+- **High Risk**: Negative weights on `Quality of Sleep` (-2.007) and `Sleep Duration` (-1.635), and positive weights on `Daily Steps` (+1.260), `Heart Rate` (+0.877), and `Age` (+0.800).
 
 ---
 
@@ -360,7 +363,7 @@ SHAP values were computed across all 374 rows using `shap.LinearExplainer` and a
         med_val = next(x["mean_abs_shap"] for x in global_shap["by_class_ranking"]["Medium"] if x["feature"] == feat)
         high_val = next(x["mean_abs_shap"] for x in global_shap["by_class_ranking"]["High"] if x["feature"] == feat)
 
-        dominant = "Low/High Sleep Separation" if feat in ["Quality of Sleep", "Sleep Duration"] else ("Cardiovascular Strain" if feat in ["Heart Rate", "Daily Steps"] else "Demographic/Baseline")
+        dominant = "Low/High Sleep Separation" if feat in ["Quality of Sleep", "Sleep Duration"] else ("Activity and Vitals" if feat in ["Heart Rate", "Daily Steps", "Physical Activity Level"] else ("Demographic/Context" if feat in ["Gender", "Age", "Occupation"] else "Health Indicator"))
         content += f"| {rank} | **{feat}** | **{ov_val:.4f}** | {low_val:.4f} | {med_val:.4f} | {high_val:.4f} | {dominant} |\n"
 
     content += f"""
@@ -371,15 +374,18 @@ SHAP values were computed across all 374 rows using `shap.LinearExplainer` and a
 
 ## 4. Held-Out Cross-Check: Permutation Importance
 
-To confirm that SHAP importance is not an artifact of in-sample collinearity, we computed **held-out permutation importance** across validation folds using 5-fold `StratifiedGroupKFold` (`groups=dup_group`, 10 repeats, scoring: `macro-F1`). Features were permuted in their original form prior to the pipeline.
+To assess whether held-out generalization and SHAP importance agree and ensure rankings are not an artifact of in-sample collinearity, we computed **held-out permutation importance** across validation folds using 5-fold `StratifiedGroupKFold` (`groups=dup_group`, 10 repeats, scoring: `macro-F1`). Features were permuted in their original form prior to the pipeline.
 
 ### Permutation Importance Table:
 
-| Rank | Feature | Mean Macro-F1 Drop | Std Dev | Stability Across Folds |
+Data Rule for Stability: "clearly above zero" if mean > 2*std, else "not distinguishable from zero".
+
+| Rank | Feature | Mean Macro-F1 Drop | Std Dev | Stability Across Folds (mean > 2*std) |
 |:---:|:---|:---:|:---:|:---|
 """
     for rank, item in enumerate(perm_results["ranking"], 1):
-        content += f"| {rank} | **{item['feature']}** | **{item['mean_f1_drop']:+.4f}** | {item['std_f1_drop']:.4f} | {'High impact' if item['mean_f1_drop'] > 0.05 else ('Moderate impact' if item['mean_f1_drop'] > 0.01 else 'Low / negligible')} |\n"
+        stability = "clearly above zero" if item['mean_f1_drop'] > 2 * item['std_f1_drop'] else "not distinguishable from zero"
+        content += f"| {rank} | **{item['feature']}** | **{item['mean_f1_drop']:+.4f}** | {item['std_f1_drop']:.4f} | {stability} |\n"
 
     content += f"""
 ![Permutation Importance](figures/permutation_importance.png)
@@ -387,7 +393,7 @@ To confirm that SHAP importance is not an artifact of in-sample collinearity, we
 ### Correlation Between SHAP and Permutation Importance:
 - **Spearman Rank Correlation ($\\rho$)**: **{spearman_perm:.4f}**
 - **$p$-value**: **{p_perm:.4e}**
-- **Finding**: Extreme agreement ($> 0.93$) between in-sample SHAP values and out-of-fold generalization drops. Both methods identify **`Quality of Sleep`** and **`Sleep Duration`** as the two dominant predictors.
+- **Finding**: Extreme agreement ($> 0.93$) between in-sample SHAP values and out-of-fold generalization drops. Both methods agree that **`Quality of Sleep`** and **`Sleep Duration`** are the two dominant predictors.
 
 ---
 
