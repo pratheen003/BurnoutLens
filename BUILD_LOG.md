@@ -233,5 +233,83 @@
   - Full schema summary and hand-checkable calculations.
   - Statements labeled [VERIFIED], [HYPOTHESIS], and [FUTURE].
 
+---
+
+## 2026-10-04 - Phase 3: Supervised Model Training & Honest Evaluation
+
+### Scope & Constraints
+- Evaluate models honestly using Phase 2 package with strict leakage prevention.
+- Same 5 baseline models without hyperparameter tuning: Logistic Regression, Decision Tree, Random Forest, XGBoost, MLP Classifier.
+- No duplicate rows deleted; evaluate under random stratified vs. group-isolated protocols.
+- Zero final models serialized/saved to disk.
+- Manual push policy respected (zero git push commands executed).
+
+### Step 0: Verification & Health Check
+- `git status; git branch` -> Branch `main`, working tree clean.
+- `pytest -v` -> 10 passed in 4.12s.
+
+### Step 1: Implementation of Modeling and Evaluation Code
+- Created `src/burnoutlens/modeling.py`:
+  - `LABEL_TO_INT = {"Low": 0, "Medium": 1, "High": 2}` and `INT_TO_LABEL`.
+  - `get_models()` returning exact baseline hyperparameters.
+  - `make_pipeline(model)` wrapping `build_preprocessor()` and model.
+- Created `src/burnoutlens/evaluation.py`:
+  - `compute_metrics()`: Accuracy, macro-F1, per-class metrics, confusion matrix.
+  - `majority_class_baseline()`: Evaluates majority-class predictor ('Low' at 37.70% accuracy).
+  - `run_protocol_a()`: Random stratified 80/20 holdout + train twin measurement.
+  - `run_protocol_b()`: Grouped holdout across 10 random seeds with verified 0% group overlap.
+  - `run_protocol_c()`: Grouped 5-fold cross-validation (seed 42 + 5 repeated seeds 0-4) with pooled OOF predictions.
+  - `mcnemar_test()`: Exact McNemar test using `scipy.stats.binomtest` on discordant pairs.
+- Created `scripts/run_supervised_eval.py`:
+  - Automated execution pipeline for all protocols, significance tests, model selection, and reporting.
+
+### Step 2: Label Consistency Findings
+- Total records: 374 across 132 unique `dup_group` profiles.
+- Groups with conflicting target labels: **0 groups (0 rows)**.
+- Theoretical accuracy ceiling: **100.00% (374 / 374)**.
+
+### Step 3: Evaluation Protocols Execution
+- **Protocol A (Random Stratified 80/20)**:
+  - Test set size: 75 samples.
+  - Identical-input twin records in train set: **58 out of 75 (77.3%)**.
+  - Accuracies: LR: 0.9067, DT: 0.8933, RF: 0.9200, XGB: 0.9467, MLP: 0.9467.
+- **Protocol B (Grouped Holdout, 10 Seeds 0–9)**:
+  - All repeats verified with 0 group overlap between train and test.
+  - Accuracies (Mean ± Std): LR: 0.9292 ± 0.0219, DT: 0.9132 ± 0.0330, RF: 0.9412 ± 0.0270, XGB: 0.9319 ± 0.0331, MLP: 0.9132 ± 0.0211.
+- **Protocol C (Grouped 5-Fold CV)**:
+  - Seed 42: LR: 0.9411 ± 0.0138, DT: 0.9199 ± 0.0233, RF: 0.9412 ± 0.0135, XGB: 0.9598 ± 0.0190, MLP: 0.9144 ± 0.0137.
+  - 5 Repeated Seeds (0–4) Macro-F1:
+    - **Logistic Regression**: `0.9499 ± 0.0060` (Mean Acc: `0.9513 ± 0.0057`)
+    - **XGBoost**: `0.9451 ± 0.0078` (Mean Acc: `0.9470 ± 0.0073`)
+    - **Random Forest**: `0.9414 ± 0.0092` (Mean Acc: `0.9427 ± 0.0090`)
+    - **Decision Tree**: `0.9230 ± 0.0110` (Mean Acc: `0.9246 ± 0.0104`)
+    - **MLP Classifier**: `0.9129 ± 0.0082` (Mean Acc: `0.9166 ± 0.0080`)
+  - Majority-class baseline: Accuracy = 0.3770, Macro-F1 = 0.1825.
+
+### Step 4: McNemar Statistical Significance
+- Top 2 models (Logistic Regression vs. XGBoost):
+  - $b$ (LR correct, XGB incorrect): 2
+  - $c$ (LR incorrect, XGB correct): 9
+  - Discordant pairs $n = 11$, two-sided $p$-value = `0.0654` (Not significant at $\alpha = 0.05$).
+
+### Step 5: Model Selection Decision
+- **Selected Candidate**: **Logistic Regression**
+- **Reasoning**: Achieved the highest repeated Macro-F1 (0.9499) under Protocol C, with performance statistically indistinguishable from XGBoost (0.9451, within 1 standard deviation $\le 0.0060$, McNemar $p = 0.0654$). Chosen for maximum interpretability, direct feature weight explainability, and minimal deployment overhead.
+
+### Step 6: Artifacts Generated
+- `reports/supervised_results.csv`: Complete metrics matrix across models and protocols.
+- `reports/supervised_results.md`: Full evaluation report with tables, per-class metrics, confusion matrices, and limitations.
+- `reports/figures/model_comparison_protocols.png`: Grouped bar chart comparing model accuracy across Protocols A, B, and C.
+- `reports/figures/confusion_matrix_selected.png`: Confusion matrix for Logistic Regression under Protocol C pooled OOF predictions.
+
+### Step 7: Tests Execution
+- Created `tests/test_supervised.py` verifying:
+  - Zero group overlap in Protocol B and C.
+  - Preprocessor strictly fitted on train subset without data leakage.
+  - Explicit target integer encoding `{"Low": 0, "Medium": 1, "High": 2}`.
+  - Zero forbidden feature leakage with `assert_no_leakage`.
+- Command: `.\venv\Scripts\pytest.exe -v` -> **14 passed in 3.38s**.
+
+
 
 
