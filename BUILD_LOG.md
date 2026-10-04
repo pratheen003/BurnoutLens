@@ -85,3 +85,83 @@
   - Notebook Verification: **MATCH (VERIFIED)**
 - Attribute: `data/raw/Sleep_health_and_lifestyle_dataset.csv` set to Read-Only (`IsReadOnly = True`).
 - Original files in workspace root remain untouched.
+
+---
+
+### Commit 1
+- **Hash**: `e0091f0`
+- **Message**: `"chore: initialize BurnoutLens project"`
+- **Staged files**: `.gitignore`, `BUILD_LOG.md`, `README.md`, `requirements.txt`, `notebooks/data_understanding.ipynb`, and `.gitkeep` files in `data/raw/`, `docs/`, `models/`, `notebooks/`, `reports/`, `src/recovery/`, `tests/`.
+
+---
+
+### Step 4: Data Verification (`src/recovery/verify_data.py`)
+- Created `src/recovery/verify_data.py`.
+- Command: `.\venv\Scripts\python.exe src/recovery/verify_data.py`
+- Generated: `reports/data_audit.md`
+- Results:
+  - Dataset Shape: `(374, 13)` [VERIFIED - Expected 374x13]
+  - Column Names: All 13 columns present and ordered correctly [VERIFIED]
+  - Missing Values: 0 missing values across all columns under `keep_default_na=False`; under standard `pd.read_csv()`, `"None"` in `Sleep Disorder` becomes `NaN` (219 rows) [VERIFIED]
+  - Duplicate Records:
+    - Including `Person ID`: 0 duplicates [VERIFIED - Expected 0]
+    - Excluding `Person ID`: 242 duplicates [VERIFIED - Expected 242] (Measured only; no records dropped per Phase 1 rules)
+  - Target Distribution (`Burnout Risk` mapped from `Stress Level`):
+    - `Low` (Stress <= 4): 141 [VERIFIED - Expected 141]
+    - `Medium` (Stress 5 - 6): 113 [VERIFIED - Expected 113]
+    - `High` (Stress >= 7): 120 [VERIFIED - Expected 120]
+  - Audit Mismatches: **0 mismatches** [VERIFIED]
+
+---
+
+### Step 5: Faithful Notebook Baseline Reproduction (`src/recovery/reproduce_notebook.py`)
+- Created `src/recovery/reproduce_notebook.py` replicating `notebooks/data_understanding.ipynb` logic verbatim:
+  - Dropped `Person ID`
+  - Imputed `Sleep Disorder` with `"None"`
+  - Split `Blood Pressure` into `Systolic BP` and `Diastolic BP` while retaining original `Blood Pressure` column in $X$ (13 total features)
+  - Derived `Burnout Risk`
+  - Replicated exact `calculate_lifestyle_score`, `lifestyle_category`, and `Burnout Index`
+  - Dropped derived/target columns, retaining `Blood Pressure`
+  - Categorical encoding with `LabelEncoder`
+  - Replicated scaling flaw: `StandardScaler().fit_transform(X)` on entire dataset before split
+  - `train_test_split(..., test_size=0.2, random_state=42, stratify=y)` -> 299 train, 75 test
+  - Trained and evaluated all 5 models + 5-fold cross-validation
+- Command: `.\venv\Scripts\python.exe src/recovery/reproduce_notebook.py`
+- Output:
+  - Logistic Regression: Test Acc `0.9600` (CV Mean: `0.9251`)
+  - Decision Tree: Test Acc `0.9733` (CV Mean: `0.8956`)
+  - Random Forest: Test Acc `0.9467` (CV Mean: `0.9250`)
+  - XGBoost: Test Acc `0.9733` (CV Mean: `0.9252`)
+  - MLP Classifier: Test Acc `0.8800` (CV Mean: `0.8065`, Fold 5: `0.4459`)
+  - Confusion Matrix (LR): `[[24, 0, 0], [0, 27, 1], [2, 0, 21]]` for classes `['High', 'Low', 'Medium']`
+  - Exact match across every single model and CV score [VERIFIED]
+
+---
+
+### Step 6: Baseline Reproduction Report
+- Created `reports/reproduction.md` containing:
+  - Full comparison table between historical and reproduced results (all exact matches)
+  - Environment and package versions
+  - Detailed preprocessing pipeline documentation
+  - Class distribution and confusion matrices
+  - "HYPOTHESIS - TO BE TESTED IN PHASE 3" regarding the 242 duplicate rows and potential data contamination across train/test splits.
+
+---
+
+### Commit 2
+- **Hash**: `fba7fb6`
+- **Message**: `"feat: recover dataset and preprocessing pipeline"`
+- **Staged files**: `BUILD_LOG.md`, `reports/data_audit.md`, `reports/reproduction.md`, `src/recovery/reproduce_notebook.py`, `src/recovery/verify_data.py`.
+
+---
+
+### Step 7: Push Attempt & Authentication Status
+- **Remote Origin**: `https://github.com/pratheen003/BurnoutLens`
+- **Command**: `git push -u origin main`
+- **Output / Result**:
+  ```text
+  fatal: could not read Username for 'https://github.com': terminal prompts disabled
+  ```
+- **Error Analysis**: Authentication requires interactive GitHub login credentials (Personal Access Token or GitHub CLI / SSH key). Execution stopped per Step 7 instructions.
+
+
