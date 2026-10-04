@@ -1,0 +1,26 @@
+# Virtual Environment
+venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS and Editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Raw dataset files (CSV license unchecked; do not commit raw data)
+data/raw/*.csv
+/Sleep_health_and_lifestyle_dataset.csv
+
+# Root reference documentation and presentations (preserved untouched in root, not committed)
+/*.docx
+/*.pptx
+/data_understanding.ipynb

@@ -1,0 +1,87 @@
+# BurnoutLens Build & Recovery Log
+
+## 2026-10-04 - Phase 1 Setup & Initialization
+
+### Environment & System Information
+- **OS**: Windows 11 / x86_64
+- **Date/Time**: 2026-10-04T10:19:06+05:30 to 2026-10-04T10:50:00+05:30
+- **Python**: 3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]
+- **Installed Package Versions**:
+  - `pandas`: 3.0.6
+  - `numpy`: 2.5.3
+  - `scikit-learn`: 1.9.1
+  - `xgboost`: 3.4.1
+  - `shap`: 0.52.0
+  - `matplotlib`: 3.11.2
+  - `seaborn`: 0.13.2
+  - `joblib`: 1.6.0
+  - `fastapi`: 0.142.2
+  - `uvicorn`: 0.54.0
+  - `pytest`: 9.1.1
+
+---
+
+### Step 0: Inspection & Git Setup
+- Command: `Get-ChildItem; git status; git remote -v; git branch`
+  - Output: `git` was not initially found in PATH.
+  - Source files present:
+    - `BurnoutLens AI - review 2.pptx` (2,343,492 bytes)
+    - `BurnoutLens_Recovery_Context.docx` (43,570 bytes)
+    - `data_understanding.ipynb` (1,420,684 bytes)
+    - `Sleep_health_and_lifestyle_dataset.csv` (24,137 bytes)
+- MinGit Installation:
+  - Downloaded `MinGit-2.44.0-64-bit.zip` from official git-for-windows releases.
+  - Extracted to `C:\Users\acer\AppData\Local\Programs\Git`.
+  - Added `C:\Users\acer\AppData\Local\Programs\Git\cmd` to user PATH and session PATH.
+  - Verified `git --version`: `git version 2.44.0.windows.1`.
+- Repository Initialization:
+  - `git init` -> Initialized empty Git repository in `D:/BurnoutLens/.git/`
+  - `git branch -M main`
+  - `git remote add origin https://github.com/pratheen003/BurnoutLens`
+  - Identified `user.name` and `user.email` unset; stopped per Step 0 rules.
+  - User configured `git config --global user.name "Pratheen K"` and `git config --global user.email "pratheen003@gmail.com"`.
+
+---
+
+### Step 1: Python Virtual Environment & Dependencies
+- Command: `python -m venv venv`
+- Upgraded pip: `.\venv\Scripts\python.exe -m pip install --upgrade pip` -> Upgraded to pip 26.2.1
+- Package Installation: `.\venv\Scripts\pip.exe install pandas numpy scikit-learn xgboost shap matplotlib seaborn joblib fastapi uvicorn pytest`
+  - Error encountered during parallel install: `PermissionError: [WinError 32] The process cannot access the file because it is being used by another process: ...`
+  - Resolution: Stopped conflicting python background tasks (`Stop-Process -Name python -Force`), re-ran `pip install`. All packages installed successfully.
+- Import Verification:
+  - Executed import test script in `.\venv\Scripts\python.exe`.
+  - All 11 libraries imported with status OK.
+- Pinned Requirements:
+  - Executed `pip freeze > requirements.txt` to capture exact reproducible dependencies.
+
+---
+
+### Step 2: Project Structure Setup
+- Created target directory tree:
+  - `data/raw/`
+  - `notebooks/`
+  - `src/recovery/`
+  - `reports/`
+  - `models/`
+  - `tests/`
+  - `docs/`
+- Added `.gitkeep` to all created directories.
+- Created `.gitignore` excluding `venv/`, `__pycache__/`, `*.pyc`, `.env`, `.ipynb_checkpoints/`, `.DS_Store`, `.vscode/`, `.idea/`, `data/raw/*.csv`, `/Sleep_health_and_lifestyle_dataset.csv`, `/*.docx`, `/*.pptx`, `/data_understanding.ipynb`.
+- Created `README.md` with explicit medical disclaimers, Kaggle dataset origin notes, and project architecture overview.
+
+---
+
+### Step 3: Source Preservation & Integrity Checks
+- Copied (did not move):
+  - `Sleep_health_and_lifestyle_dataset.csv` -> `data/raw/Sleep_health_and_lifestyle_dataset.csv`
+  - `data_understanding.ipynb` -> `notebooks/data_understanding.ipynb`
+- SHA-256 Checksums:
+  - CSV Original: `1EFE7B6F781FF88078D08D81FE136CFF98B1B0C32560F35F8650CA5984B77841`
+  - CSV Copy:     `1EFE7B6F781FF88078D08D81FE136CFF98B1B0C32560F35F8650CA5984B77841`
+  - CSV Verification: **MATCH (VERIFIED)**
+  - Notebook Original: `BC54DBEBC1197918AEBD25BE5555A8C490BC35222B7CC508F690DD24FE87F4ED`
+  - Notebook Copy:     `BC54DBEBC1197918AEBD25BE5555A8C490BC35222B7CC508F690DD24FE87F4ED`
+  - Notebook Verification: **MATCH (VERIFIED)**
+- Attribute: `data/raw/Sleep_health_and_lifestyle_dataset.csv` set to Read-Only (`IsReadOnly = True`).
+- Original files in workspace root remain untouched.
