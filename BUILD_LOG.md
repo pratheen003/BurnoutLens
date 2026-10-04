@@ -355,6 +355,80 @@
   - Verifies `StratifiedKFold` splits do not require groups while pipeline preprocessor fits strictly on train folds.
 - Executed `pytest -v`: **15 passed in 4.31s**.
 
+---
+
+## 2026-10-04 - Phase 4: Unsupervised Behavioral Analytics (K-Means & PCA)
+
+### Step 0: Pre-Flight Verification
+- Confirmed git status clean, branch `main`.
+- Active virtual environment verified.
+- Confirmed all 15 existing tests pass (`pytest -v`).
+
+### Step 1: Implementation of Analytics Module & Script
+- Created `src/burnoutlens/analytics.py` providing:
+  - `prepare_clustering_data()`: Extracts 12 `INPUT_FEATURES`, verifies zero leakage via `assert_no_leakage()`, fits clean `ColumnTransformer` (OneHotEncoder + StandardScaler), yielding dense (374, 27) matrix.
+  - `evaluate_kmeans_k_range()`: Computes inertia and silhouette scores for $k \in [2, 8]$ using `random_state=42` and `n_init=10`. Implements pre-specified selection rule.
+  - `evaluate_cluster_stability()`: Evaluates sensitivity to duplicate rows (132 unique rows vs full data ARI) and seed stability across 10 random seeds (mean pairwise ARI).
+  - `fit_pca()`: Evaluates first 10 principal components, cumulative variance, top 5 positive and negative feature loadings for PC1 and PC2, and 2-D coordinates.
+  - `compute_cluster_profiles()`: Computes descriptive numeric statistics (mean, median, std) and categorical modes/shares for measured features; strictly post-hoc burnout/lifestyle metrics; crosstabulation and chi-square test of independence.
+- Created `scripts/run_clustering_pca.py` orchestrating end-to-end execution and report generation.
+
+### Step 2: Choosing $k$ (Inertia & Silhouette Evaluation)
+- Evaluated $k \in [2, 8]$ on dense 27-dimensional feature space:
+  - $k=2$: Inertia 2881.59, Silhouette 0.2911, Sizes: 156 / 218
+  - $k=3$: Inertia 2153.01, Silhouette 0.3559, Sizes: 128 / 67 / 179 (Historical $k$)
+  - $k=4$: Inertia 1756.15, Silhouette 0.4108, Sizes: 149 / 32 / 67 / 126
+  - $k=5$: Inertia 1417.87, Silhouette 0.4750, Sizes: 35 / 126 / 149 / 32 / 32
+  - $k=6$: Inertia 1211.25, Silhouette 0.4692, Sizes: 93 / 35 / 32 / 121 / 32 / 61
+  - $k=7$: Inertia 971.78, Silhouette 0.5067, Sizes: 32 / 81 / 53 / 65 / 35 / 76 / 32
+  - $k=8$: Inertia 804.16, Silhouette 0.5454, Sizes: 21 / 106 / 32 / 33 / 69 / 32 / 39 / 42
+- **Pre-specified Rule Application**: Global best silhouette is $k=8$ (`0.5454`). Historical $k=3$ silhouette is `0.3559`. Difference is `0.1895` (> 0.02 continuity threshold).
+- **Selected $k$**: **$k=8$**.
+
+### Step 3: Sensitivity & Cluster Stability
+- **Sensitivity to Duplicate Rows**:
+  - $k=8$: ARI between full-data clustering and 132 unique-profile clustering is **0.8795**.
+  - $k=3$: ARI between full-data clustering and 132 unique-profile clustering is **0.9730**.
+- **Algorithmic Seed Stability (10 Random Seeds, 0 to 9)**:
+  - $k=8$: Mean pairwise ARI across 45 seed combinations is **0.7634 ± 0.1337** (range: [0.5878, 1.0000]). Verdict: **Stable**.
+  - $k=3$: Mean pairwise ARI is **1.0000 ± 0.0000**.
+
+### Step 4: Principal Component Analysis (PCA)
+- **Variance Capture**:
+  - PC1: `32.95%`
+  - PC2: `27.10%`
+  - Combined 2-PC: `60.04%` (PC3: 16.44%, PC4: 6.91%, PC5: 4.70%, ..., PC10: 0.89%; Cumulative 10-PC: 96.44%).
+  - **Lossy Projection Caveat**: The 2-D plot omits `39.96%` of the total variance; Euclidean distances in 2-D do not represent full 27-D geometric distances.
+- **Top Feature Loadings**:
+  - **PC1 Positive**: `Diastolic BP` (+0.521), `Systolic BP` (+0.503), `Age` (+0.331), `Physical Activity Level` (+0.238), `BMI Category_Overweight` (+0.205)
+  - **PC1 Negative**: `BMI Category_Normal` (-0.217), `Sleep Disorder_None` (-0.201), `Sleep Duration` (-0.137), `Quality of Sleep` (-0.101), `Gender_Male` (-0.088)
+  - **PC2 Positive**: `Quality of Sleep` (+0.564), `Sleep Duration` (+0.515), `Age` (+0.371), `Physical Activity Level` (+0.190), `Gender_Female` (+0.120)
+  - **PC2 Negative**: `Heart Rate` (-0.409), `Gender_Male` (-0.120), `Occupation_Doctor` (-0.078), `Sleep Disorder_Insomnia` (-0.074), `Occupation_Salesperson` (-0.052)
+
+### Step 5: Cluster Profiles & Post-Hoc Significance
+- Derived neutral descriptive human labels based strictly on measured values (e.g., "short sleep, high activity, elevated BP, overweight BMI, frequent sleep apnea").
+- Post-hoc contingency analysis of Cluster vs. `Burnout Risk`:
+  - $\chi^2 = 502.14$, $\text{df} = 14$, $p = 3.26 \times 10^{-98}$ ($p < 0.05$).
+  - Caveat explicitly noted: nominal p-value is artificially inflated because duplicate rows violate sample independence.
+
+### Step 6: Generated Artifacts & Reports
+- `reports/clustering_pca.md`: Full analytics report covering setup, $k$ selection, stability, PCA, profiles, crosstab, historical comparison, and limitations.
+- `reports/cluster_profiles.json`: Lightweight export for future application serving (cluster id, size, human label, key profile stats, post-hoc metrics; zero serialized models).
+- `reports/figures/`:
+  - `elbow_silhouette.png`
+  - `pca_scree.png`
+  - `pca_clusters.png`
+  - `pca_by_risk.png`
+
+### Step 7: Tests Execution
+- Created `tests/test_analytics.py`:
+  - `test_clustering_input_no_forbidden_columns`: Confirms no target/forbidden leakage.
+  - `test_cluster_sizes_and_labels`: Confirms clusters sum to 374 and labels span `range(k)`.
+  - `test_pca_variance_properties`: Confirms explained variance $\le 1.0$ and cumulative variance is monotonic.
+  - `test_clustering_reproducibility`: Confirms identical seed reproduces identical assignments.
+- Executed `pytest -v`: **19 passed in 7.42s** (15 existing + 4 new).
+
+
 
 
 
