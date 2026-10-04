@@ -1,0 +1,555 @@
+{
+  "model_selected": "LogisticRegression(max_iter=1000, random_state=42)",
+  "decision_scale": "decision_function (log-odds)",
+  "shap_version": "0.52.0",
+  "xgboost_version": "3.4.1",
+  "global_shap_importance": {
+    "overall_ranking": [
+      {
+        "feature": "Quality of Sleep",
+        "mean_abs_shap": 1.4057112755999488
+      },
+      {
+        "feature": "Sleep Duration",
+        "mean_abs_shap": 0.9553226370835521
+      },
+      {
+        "feature": "Daily Steps",
+        "mean_abs_shap": 0.7911112894606038
+      },
+      {
+        "feature": "Heart Rate",
+        "mean_abs_shap": 0.6573078655528785
+      },
+      {
+        "feature": "Gender",
+        "mean_abs_shap": 0.6324933552638062
+      },
+      {
+        "feature": "Physical Activity Level",
+        "mean_abs_shap": 0.5112644906969358
+      },
+      {
+        "feature": "Age",
+        "mean_abs_shap": 0.4463802386893837
+      },
+      {
+        "feature": "Sleep Disorder",
+        "mean_abs_shap": 0.4314159335158428
+      },
+      {
+        "feature": "Systolic BP",
+        "mean_abs_shap": 0.4015191981619315
+      },
+      {
+        "feature": "Occupation",
+        "mean_abs_shap": 0.3215739670432821
+      },
+      {
+        "feature": "BMI Category",
+        "mean_abs_shap": 0.2800233741113302
+      },
+      {
+        "feature": "Diastolic BP",
+        "mean_abs_shap": 0.14162354470077199
+      }
+    ],
+    "by_class_ranking": {
+      "Low": [
+        {
+          "feature": "Quality of Sleep",
+          "mean_abs_shap": 2.108566913399922
+        },
+        {
+          "feature": "Daily Steps",
+          "mean_abs_shap": 1.1866669341909053
+        },
+        {
+          "feature": "Heart Rate",
+          "mean_abs_shap": 0.9859617983293179
+        },
+        {
+          "feature": "Gender",
+          "mean_abs_shap": 0.9487400328957092
+        },
+        {
+          "feature": "Sleep Duration",
+          "mean_abs_shap": 0.6157339497977701
+        },
+        {
+          "feature": "Systolic BP",
+          "mean_abs_shap": 0.6022787972428977
+        },
+        {
+          "feature": "BMI Category",
+          "mean_abs_shap": 0.4200350611669952
+        },
+        {
+          "feature": "Occupation",
+          "mean_abs_shap": 0.3147197499216725
+        },
+        {
+          "feature": "Age",
+          "mean_abs_shap": 0.2972925458079254
+        },
+        {
+          "feature": "Physical Activity Level",
+          "mean_abs_shap": 0.2363252090236613
+        },
+        {
+          "feature": "Diastolic BP",
+          "mean_abs_shap": 0.17459991119889495
+        },
+        {
+          "feature": "Sleep Disorder",
+          "mean_abs_shap": 0.15260763350009926
+        }
+      ],
+      "Medium": [
+        {
+          "feature": "Sleep Duration",
+          "mean_abs_shap": 0.817250005827562
+        },
+        {
+          "feature": "Sleep Disorder",
+          "mean_abs_shap": 0.6072607491722222
+        },
+        {
+          "feature": "Physical Activity Level",
+          "mean_abs_shap": 0.5305715270217405
+        },
+        {
+          "feature": "Systolic BP",
+          "mean_abs_shap": 0.3834144986465329
+        },
+        {
+          "feature": "Age",
+          "mean_abs_shap": 0.3722778122261517
+        },
+        {
+          "feature": "Quality of Sleep",
+          "mean_abs_shap": 0.3707011408352288
+        },
+        {
+          "feature": "Occupation",
+          "mean_abs_shap": 0.3632377908360331
+        },
+        {
+          "feature": "Gender",
+          "mean_abs_shap": 0.31307394092488716
+        },
+        {
+          "feature": "Heart Rate",
+          "mean_abs_shap": 0.27368003681640113
+        },
+        {
+          "feature": "Daily Steps",
+          "mean_abs_shap": 0.1336422873773761
+        },
+        {
+          "feature": "BMI Category",
+          "mean_abs_shap": 0.06728538717168522
+        },
+        {
+          "feature": "Diastolic BP",
+          "mean_abs_shap": 0.03783540585226183
+        }
+      ],
+      "High": [
+        {
+          "feature": "Quality of Sleep",
+          "mean_abs_shap": 1.737865772564704
+        },
+        {
+          "feature": "Sleep Duration",
+          "mean_abs_shap": 1.4329839556253288
+        },
+        {
+          "feature": "Daily Steps",
+          "mean_abs_shap": 1.053024646813535
+        },
+        {
+          "feature": "Physical Activity Level",
+          "mean_abs_shap": 0.7668967360454053
+        },
+        {
+          "feature": "Heart Rate",
+          "mean_abs_shap": 0.7122817615129152
+        },
+        {
+          "feature": "Age",
+          "mean_abs_shap": 0.6695703580340739
+        },
+        {
+          "feature": "Gender",
+          "mean_abs_shap": 0.6356660919708204
+        },
+        {
+          "feature": "Sleep Disorder",
+          "mean_abs_shap": 0.5343794178752094
+        },
+        {
+          "feature": "BMI Category",
+          "mean_abs_shap": 0.3527496739953108
+        },
+        {
+          "feature": "Occupation",
+          "mean_abs_shap": 0.28676436037213765
+        },
+        {
+          "feature": "Systolic BP",
+          "mean_abs_shap": 0.218864298596361
+        },
+        {
+          "feature": "Diastolic BP",
+          "mean_abs_shap": 0.21243531705116
+        }
+      ]
+    }
+  },
+  "permutation_importance": {
+    "ranking": [
+      {
+        "feature": "Quality of Sleep",
+        "mean_f1_drop": 0.17188098970779694,
+        "std_f1_drop": 0.04729226958408365
+      },
+      {
+        "feature": "Sleep Duration",
+        "mean_f1_drop": 0.14209691196608823,
+        "std_f1_drop": 0.02558305413272673
+      },
+      {
+        "feature": "Gender",
+        "mean_f1_drop": 0.05778940980357955,
+        "std_f1_drop": 0.05313082846856116
+      },
+      {
+        "feature": "Heart Rate",
+        "mean_f1_drop": 0.05576026221507473,
+        "std_f1_drop": 0.03623508388949759
+      },
+      {
+        "feature": "Daily Steps",
+        "mean_f1_drop": 0.04332431867253543,
+        "std_f1_drop": 0.031362573351540586
+      },
+      {
+        "feature": "Physical Activity Level",
+        "mean_f1_drop": 0.0245305521913624,
+        "std_f1_drop": 0.04455156667116815
+      },
+      {
+        "feature": "Systolic BP",
+        "mean_f1_drop": 0.01069960503836924,
+        "std_f1_drop": 0.027007687628292414
+      },
+      {
+        "feature": "Age",
+        "mean_f1_drop": 0.0059399741466001025,
+        "std_f1_drop": 0.004761245549496846
+      },
+      {
+        "feature": "Occupation",
+        "mean_f1_drop": 0.0010323336397259492,
+        "std_f1_drop": 0.012158471105381168
+      },
+      {
+        "feature": "Sleep Disorder",
+        "mean_f1_drop": -0.00011123744460067586,
+        "std_f1_drop": 0.009421221732530492
+      },
+      {
+        "feature": "BMI Category",
+        "mean_f1_drop": -0.002519566799719819,
+        "std_f1_drop": 0.004005900297571547
+      },
+      {
+        "feature": "Diastolic BP",
+        "mean_f1_drop": -0.006711336933175047,
+        "std_f1_drop": 0.008853953531055872
+      }
+    ],
+    "n_splits": 5,
+    "n_repeats": 10
+  },
+  "spearman_correlation_shap_vs_permutation": {
+    "rho": 0.9371,
+    "p_value": 6.9931649532105415e-06
+  },
+  "spearman_correlation_lr_vs_xgboost_shap": {
+    "rho": 0.8252,
+    "p_value": 0.0009513628555555001
+  },
+  "top_lr_coefficients_transformed": {
+    "Low": [
+      [
+        "Quality of Sleep",
+        2.435055098441705
+      ],
+      [
+        "Daily Steps",
+        -1.4195414279330072
+      ],
+      [
+        "Heart Rate",
+        -1.2144167381546016
+      ],
+      [
+        "Gender_Female",
+        0.9536371827977379
+      ],
+      [
+        "Gender_Male",
+        -0.9441504162296238
+      ],
+      [
+        "BMI Category_Normal",
+        -0.7474680586850033
+      ],
+      [
+        "Systolic BP",
+        -0.7316316995206176
+      ],
+      [
+        "Sleep Duration",
+        0.7023863632534412
+      ],
+      [
+        "BMI Category_Obese",
+        0.6953607917108694
+      ],
+      [
+        "Occupation_Lawyer",
+        -0.6887117517223975
+      ]
+    ],
+    "Medium": [
+      [
+        "Occupation_Lawyer",
+        0.9843517545665489
+      ],
+      [
+        "Sleep Duration",
+        0.9322618310239428
+      ],
+      [
+        "Sleep Disorder_None",
+        0.8247904821771477
+      ],
+      [
+        "Sleep Disorder_Sleep Apnea",
+        -0.7558454846125678
+      ],
+      [
+        "Occupation_Engineer",
+        -0.6848826751621605
+      ],
+      [
+        "Physical Activity Level",
+        0.6176397599642499
+      ],
+      [
+        "Occupation_Doctor",
+        -0.5331075042416558
+      ],
+      [
+        "Occupation_Salesperson",
+        -0.5303783010512196
+      ],
+      [
+        "Occupation_Scientist",
+        0.5034567891605456
+      ],
+      [
+        "Systolic BP",
+        0.46576137587735233
+      ]
+    ],
+    "High": [
+      [
+        "Quality of Sleep",
+        -2.0069550000988623
+      ],
+      [
+        "Sleep Duration",
+        -1.6346481942773852
+      ],
+      [
+        "Daily Steps",
+        1.2596728430842519
+      ],
+      [
+        "Physical Activity Level",
+        -0.8927465795748274
+      ],
+      [
+        "Heart Rate",
+        0.8773229296807004
+      ],
+      [
+        "Age",
+        0.8002490967369815
+      ],
+      [
+        "Sleep Disorder_None",
+        -0.7304501974322017
+      ],
+      [
+        "Gender_Female",
+        -0.6435283396409566
+      ],
+      [
+        "Gender_Male",
+        0.6280098948977567
+      ],
+      [
+        "Occupation_Accountant",
+        0.5540643459785439
+      ]
+    ]
+  },
+  "worked_examples": {
+    "sample_low": {
+      "predicted_class": "Low",
+      "predicted_class_index": 0,
+      "class_probabilities": {
+        "Low": 0.9235,
+        "Medium": 0.0765,
+        "High": 0.0
+      },
+      "base_value": -0.3873,
+      "top_features": [
+        {
+          "feature": "Quality of Sleep",
+          "user_value": 8,
+          "signed_contribution": 1.7284,
+          "abs_contribution": 1.7284,
+          "direction": "pushes toward Low"
+        },
+        {
+          "feature": "Systolic BP",
+          "user_value": 117,
+          "signed_contribution": 1.0745,
+          "abs_contribution": 1.0745,
+          "direction": "pushes toward Low"
+        },
+        {
+          "feature": "Gender",
+          "user_value": "Female",
+          "signed_contribution": 0.9633,
+          "abs_contribution": 0.9633,
+          "direction": "pushes toward Low"
+        },
+        {
+          "feature": "Sleep Duration",
+          "user_value": 7.9,
+          "signed_contribution": 0.7226,
+          "abs_contribution": 0.7226,
+          "direction": "pushes toward Low"
+        },
+        {
+          "feature": "Heart Rate",
+          "user_value": 69,
+          "signed_contribution": 0.6482,
+          "abs_contribution": 0.6482,
+          "direction": "pushes toward Low"
+        }
+      ]
+    },
+    "sample_medium": {
+      "predicted_class": "Medium",
+      "predicted_class_index": 1,
+      "class_probabilities": {
+        "Low": 0.0025,
+        "Medium": 0.6922,
+        "High": 0.3053
+      },
+      "base_value": 1.1094,
+      "top_features": [
+        {
+          "feature": "Sleep Duration",
+          "user_value": 6.1,
+          "signed_contribution": -1.1528,
+          "abs_contribution": 1.1528,
+          "direction": "pushes away"
+        },
+        {
+          "feature": "Age",
+          "user_value": 27,
+          "signed_contribution": 0.7258,
+          "abs_contribution": 0.7258,
+          "direction": "pushes toward Medium"
+        },
+        {
+          "feature": "Occupation",
+          "user_value": "Software Engineer",
+          "signed_contribution": 0.6215,
+          "abs_contribution": 0.6215,
+          "direction": "pushes toward Medium"
+        },
+        {
+          "feature": "Sleep Disorder",
+          "user_value": "None",
+          "signed_contribution": 0.5543,
+          "abs_contribution": 0.5543,
+          "direction": "pushes toward Medium"
+        },
+        {
+          "feature": "Physical Activity Level",
+          "user_value": 42,
+          "signed_contribution": -0.4867,
+          "abs_contribution": 0.4867,
+          "direction": "pushes away"
+        }
+      ]
+    },
+    "sample_high": {
+      "predicted_class": "High",
+      "predicted_class_index": 2,
+      "class_probabilities": {
+        "Low": 0.0,
+        "Medium": 0.0223,
+        "High": 0.9777
+      },
+      "base_value": -0.7221,
+      "top_features": [
+        {
+          "feature": "Daily Steps",
+          "user_value": 10000,
+          "signed_contribution": 2.6212,
+          "abs_contribution": 2.6212,
+          "direction": "pushes toward High"
+        },
+        {
+          "feature": "Quality of Sleep",
+          "user_value": 6,
+          "signed_contribution": 1.9334,
+          "abs_contribution": 1.9334,
+          "direction": "pushes toward High"
+        },
+        {
+          "feature": "Sleep Duration",
+          "user_value": 6.2,
+          "signed_contribution": 1.8156,
+          "abs_contribution": 1.8156,
+          "direction": "pushes toward High"
+        },
+        {
+          "feature": "Age",
+          "user_value": 28,
+          "signed_contribution": -1.213,
+          "abs_contribution": 1.213,
+          "direction": "pushes away"
+        },
+        {
+          "feature": "Heart Rate",
+          "user_value": 75,
+          "signed_contribution": 0.8062,
+          "abs_contribution": 0.8062,
+          "direction": "pushes toward High"
+        }
+      ]
+    }
+  }
+}

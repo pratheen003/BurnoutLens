@@ -478,9 +478,76 @@
 - Documented full comparison table in `reports/clustering_pca.md` contrasting the 27-D occupational archetypes against the 5-D behavioral cohorts.
 - Updated `reports/cluster_profiles.json` to store both `"variant_a_full_features"` and `"variant_b_behavioral_only"` profiles under dedicated keys.
 
-### Step 5: Unit Tests
-- Added 3 new unit tests in `tests/test_analytics.py`:
-  - `test_variant_b_input_columns_and_no_forbidden`: Verifies exactly 5 features and zero leakage.
-  - `test_variant_b_cluster_sizes_and_labels`: Verifies cluster sizes sum to 374 and labels span range(5).
-  - `test_variant_b_determinism`: Verifies deterministic cluster assignments across identical seeds.
 - Executed `pytest -v`: **22 passed in 8.25s** (19 existing + 3 new).
+
+---
+
+## 2026-10-04 - Phase 5: Model Explainability (SHAP & Permutation Importance)
+
+### Step 0: Pre-Flight Verification
+- Verified git status clean, branch `main`.
+- Active virtual environment verified.
+- Confirmed all 22 existing tests pass (`pytest -v`).
+
+### Step 1: Implementation of Explainability Module & Pipeline
+- Created `src/burnoutlens/explain.py`:
+  - `map_transformed_to_original()`: Maps all 27 one-hot and scaled features from `preprocessor.get_feature_names_out()` to the 12 original `INPUT_FEATURES`, verifying that every transformed column maps to exactly one original feature.
+  - `fit_explainability_pipeline()`: Fits the selected Phase 3 Logistic Regression pipeline (`build_preprocessor()` + `LogisticRegression(max_iter=1000, random_state=42)`) on all 374 rows in memory (`assert_no_leakage` verified). Sets SHAP background to the 132 unique-profile rows (transformed) with `max_samples=132` to avoid subsampling.
+  - `aggregate_shap_to_original()`: Linearly sums one-hot SHAP contributions to collapse from 27 transformed features back to the 12 original features while strictly preserving local and global additivity.
+  - `compute_global_shap_importance()`: Computes global mean |SHAP| overall and per class (Low, Medium, High).
+  - `compute_permutation_importance()`: Evaluates held-out generalization importance using `StratifiedGroupKFold` (`groups=dup_group`, 5 folds, 10 repeats, scoring: `macro-F1`) by permuting original columns before the pipeline.
+  - `explain_row()`: Validates single input records against `reports/feature_schema.json` (raising `ValueError` for unseen categories or out-of-range numeric values), infers class and probabilities, and outputs top 5 original features by |contribution| for the predicted class with signed values and direction (`pushes toward <class>` / `pushes away`).
+- Created `scripts/run_explainability.py` orchestrating end-to-end execution, figure generation, and report compilation.
+
+### Step 2: Global Explainability Findings
+- **Installed Library Versions**: `shap` = 0.52.0, `xgboost` = 3.4.1, `scikit-learn` = 1.9.1.
+- **Output Shapes**:
+  - Transformed matrix: `(374, 27)`
+  - SHAP LinearExplainer values: `(374, 27, 3)`
+  - Aggregated original SHAP values: `(374, 12, 3)`
+  - Base values: `(374, 3)`
+- **Additivity Verification**:
+  - Decision scale: `decision_function` (log-odds scale for multiclass Logistic Regression).
+  - Base value + $\sum \phi_i$ matches `decision_function` output across all classes within $3.55 \times 10^{-15}$ tolerance.
+- **Top 5 Global Features by SHAP**:
+  1. `Quality of Sleep`: Mean |SHAP| = `1.4057`
+  2. `Sleep Duration`: Mean |SHAP| = `0.9553`
+  3. `Daily Steps`: Mean |SHAP| = `0.7911`
+  4. `Heart Rate`: Mean |SHAP| = `0.6573`
+  5. `Gender`: Mean |SHAP| = `0.6325`
+- **Class-Specific Drivers**:
+  - **Low Risk**: Driven by higher `Quality of Sleep` (2.1086), lower `Daily Steps` (1.1867), lower `Heart Rate` (0.9860), and `Gender` (0.9487).
+  - **Medium Risk**: Driven by `Sleep Duration` (0.8173), `Sleep Disorder` (0.6073), `Physical Activity Level` (0.5306), `Systolic BP` (0.3834).
+  - **High Risk**: Heavily penalized by poor `Quality of Sleep` (1.7379), reduced `Sleep Duration` (1.4330), elevated `Daily Steps` (1.0530), `Physical Activity Level` (0.7669), and elevated `Heart Rate` (0.7123).
+- **Held-Out Permutation Importance (Macro-F1 Drops)**:
+  - Top features: `Quality of Sleep` (+0.1719 ± 0.0473), `Sleep Duration` (+0.1421 ± 0.0256), `Gender` (+0.0578 ± 0.0531), `Heart Rate` (+0.0558 ± 0.0362), `Daily Steps` (+0.0433 ± 0.0314).
+  - **Spearman Rank Correlation (LR SHAP vs. Permutation)**: **$\rho = 0.9371$** ($p = 6.99 \times 10^{-6}$).
+- **Tree Cross-Check (XGBoost)**:
+  - When initializing `TreeExplainer(model, data=X_unique_trans)` with background data, SHAP 0.52.0 raised:
+    `NotImplementedError: Categorical split is not yet supported. You can still use TreeExplainer with feature_perturbation="tree_path_dependent".`
+  - Version-aware execution using `feature_perturbation="tree_path_dependent"` succeeded, ranking `Quality of Sleep` (1.243), `Heart Rate` (0.939), `Sleep Duration` (0.766), `Gender` (0.359), and `Daily Steps` (0.317) as top 5.
+  - **Spearman Rank Correlation (LR SHAP vs. XGBoost SHAP)**: **$\rho = 0.8252$** ($p = 9.51 \times 10^{-4}$).
+
+### Step 3: Local Explanations
+- Generated worked local explanations for 3 real dataset rows:
+  - **Low Risk Example** (Accountant, 44, F, Sleep 7.9h, Quality 8): $P(\text{Low}) = 92.3\%$. Pushed toward Low by Quality of Sleep (+1.728), Systolic BP (+1.075), Gender (+0.963).
+  - **Medium Risk Example** (Software Engineer, 27, M, Sleep 6.1h, Quality 6): $P(\text{Medium}) = 69.2\%$. Pushed away by short sleep (-1.153), pushed toward Medium by Age (+0.726) and Occupation (+0.622).
+  - **High Risk Example** (Nurse, 28, F, Sleep 6.2h, Quality 6, Steps 10000, BP 140/95): $P(\text{High}) = 97.8\%$. Pushed toward High by Daily Steps (+2.621), Quality of Sleep (+1.933), Sleep Duration (+1.816).
+
+### Step 4: Generated Artifacts & Figures
+- `reports/explainability.md`: Full explainability report.
+- `reports/feature_importance.json`: Global SHAP, permutation ranking, correlations, and worked local examples.
+- `reports/figures/shap_global_importance.png`: Horizontal bar chart of global mean |SHAP| values.
+- `reports/figures/shap_by_class.png`: Grouped bar chart showing feature importance across Low, Medium, and High classes.
+- `reports/figures/permutation_importance.png`: Bar chart with error bars showing held-out macro-F1 drops.
+- `reports/figures/local_example_high.png`: Local explanation bar chart for sample high-risk prediction.
+
+### Step 5: Unit Tests Execution
+- Created `tests/test_explain.py` with 5 tests:
+  - `test_every_transformed_column_maps_to_exactly_one_original_feature`
+  - `test_shap_additivity` (verifies additivity on decision_function scale within $10^{-6}$)
+  - `test_explain_row_output_contains_only_input_features_no_forbidden`
+  - `test_explain_row_raises_on_unseen_category_and_out_of_range_numeric`
+  - `test_explainability_determinism`
+- Executed `pytest -v`: **27 passed in 12.50s** (22 existing + 5 new).
+
