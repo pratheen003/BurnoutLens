@@ -115,7 +115,7 @@ McNemar's exact test was computed on the pooled out-of-fold discordant predictio
 - **Rank 2 Runner-Up**: `XGBoost` with Protocol C repeated Macro-F1 = `0.9451 ± 0.0078`.
 - **Performance Difference**: `0.0048` (Top 1 standard deviation threshold: `0.0060`).
 - **Decision**: **Logistic Regression**
-- **Reasoning**: Logistic Regression achieved the highest repeated Macro-F1 (0.9499 +/- 0.0060) under Protocol C, surpassing the runner-up (XGBoost: 0.9451 +/- 0.0078) by 0.0048. Because Logistic Regression is the top-ranked model and is also a linear, transparent classifier, it is selected without any trade-off between predictive accuracy and clinical interpretability.
+- **Reasoning**: Logistic Regression achieved the highest repeated Macro-F1 (0.9499 +/- 0.0060) under Protocol C, surpassing the runner-up (XGBoost: 0.9451 +/- 0.0078) by 0.0048. The performance difference between Logistic Regression and XGBoost is not statistically significant (McNemar p = 0.065, discordant n = 11), and both models perform within one standard deviation (0.0060) of each other. Logistic Regression is selected as a simpler, linear, and transparent classifier.
 - *(In compliance with Phase 3 instructions, zero models have been serialized or saved as production artifacts).*
 
 ---
@@ -138,7 +138,7 @@ The hypothesis that duplicate records artificially inflate evaluation performanc
 - **MLP Classifier**: Protocol C F1 = `0.9129 +/- 0.0082` vs. Protocol D F1 = `0.9192 +/- 0.0056` | Difference ($D - C$) = `+0.0064` (Acc Diff: `+0.0074`) -> Within std
 
 - **Validation Fold Duplicate Contamination in Protocol D**: An average of **60.76 ± 3.64 rows (81.2%)** in each validation fold of Protocol D had an exact duplicate twin in the training fold.
-- The empirical data demonstrates that prior un-grouped random cross-validation benchmarks were systematically contaminated by twin records, inflating performance metrics for high-capacity models (Decision Tree by +3.36%, Random Forest by +3.37%, and XGBoost by +3.09% Macro-F1).
+- The empirical data demonstrates that random CV overstated performance by roughly 1-3 points on this dataset, inflating performance metrics for high-capacity models (Decision Tree by +3.36%, Random Forest by +3.37%, and XGBoost by +3.09% Macro-F1).
 
 ---
 

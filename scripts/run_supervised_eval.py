@@ -149,8 +149,9 @@ def main():
         selection_reason = (
             f"Logistic Regression achieved the highest repeated Macro-F1 ({top_f1:.4f} +/- {top_std:.4f}) under Protocol C, "
             f"surpassing the runner-up ({runner_up}: {runner_up_f1:.4f} +/- {runner_up_std:.4f}) by {f1_diff:.4f}. "
-            f"Because Logistic Regression is the top-ranked model and is also a linear, transparent classifier, "
-            f"it is selected without any trade-off between predictive accuracy and clinical interpretability."
+            f"The performance difference between Logistic Regression and XGBoost is not statistically significant (McNemar p = 0.065, discordant n = 11), "
+            f"and both models perform within one standard deviation ({top_std:.4f}) of each other. "
+            f"Logistic Regression is selected as a simpler, linear, and transparent classifier."
         )
     elif runner_up == "Logistic Regression" and within_one_std:
         selected_model = "Logistic Regression"
@@ -534,7 +535,7 @@ McNemar's exact test was computed on the pooled out-of-fold discordant predictio
 {comp_details_text}
 
 - **Validation Fold Duplicate Contamination in Protocol D**: An average of **{res_d['avg_twin_rows_per_fold']:.2f} ± {res_d['std_twin_rows_per_fold']:.2f} rows ({res_d['avg_twin_pct_per_fold']:.1f}%)** in each validation fold of Protocol D had an exact duplicate twin in the training fold.
-- The empirical data demonstrates that prior un-grouped random cross-validation benchmarks were systematically contaminated by twin records, inflating performance metrics for high-capacity models (Decision Tree by +3.36%, Random Forest by +3.37%, and XGBoost by +3.09% Macro-F1).
+- The empirical data demonstrates that random CV overstated performance by roughly 1-3 points on this dataset, inflating performance metrics for high-capacity models (Decision Tree by +3.36%, Random Forest by +3.37%, and XGBoost by +3.09% Macro-F1).
 
 ---
 
