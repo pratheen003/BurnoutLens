@@ -75,3 +75,65 @@ def test_clustering_reproducibility(clean_df):
     labels2 = run2["results_by_k"][3]["labels"]
 
     np.testing.assert_array_equal(labels1, labels2)
+
+
+def test_variant_b_input_columns_and_no_forbidden(clean_df):
+    """Variant B input must have exactly the 5 behavioral columns and no forbidden columns."""
+    from burnoutlens.analytics import BEHAVIORAL_FEATURES, prepare_behavioral_clustering_data
+
+    assert len(BEHAVIORAL_FEATURES) == 5
+    expected_cols = {
+        "Sleep Duration",
+        "Quality of Sleep",
+        "Physical Activity Level",
+        "Daily Steps",
+        "Heart Rate",
+    }
+    assert set(BEHAVIORAL_FEATURES) == expected_cols
+
+    for col in FORBIDDEN_COLUMNS:
+        assert col not in BEHAVIORAL_FEATURES
+
+    X_b, feature_names, _ = prepare_behavioral_clustering_data(clean_df)
+    assert X_b.shape == (374, 5)
+    assert feature_names == list(BEHAVIORAL_FEATURES)
+    for col in FORBIDDEN_COLUMNS:
+        assert col not in feature_names
+
+
+def test_variant_b_cluster_sizes_and_labels(clean_df):
+    """Variant B cluster sizes must sum to 374 and labels must be strictly within range(k)."""
+    from burnoutlens.analytics import BEHAVIORAL_FEATURES, prepare_behavioral_clustering_data
+    from burnoutlens.config import INPUT_FEATURES
+
+    X_b_full, _, scaler_b = prepare_behavioral_clustering_data(clean_df)
+    df_unique = clean_df.drop_duplicates(subset=INPUT_FEATURES).copy()
+    X_b_unique = scaler_b.transform(df_unique[BEHAVIORAL_FEATURES])
+
+    eval_b = evaluate_kmeans_k_range(
+        X_b_full, X_unique_trans=X_b_unique, k_min=2, k_max=8, random_state=42, n_init=10, selection_criterion="unique"
+    )
+    chosen_k = eval_b["chosen_k"]
+    assert chosen_k == 5
+
+    labels = eval_b["results_by_k"][chosen_k]["labels"]
+    sizes = eval_b["results_by_k"][chosen_k]["cluster_sizes"]
+    assert len(labels) == 374
+    assert sum(sizes) == 374
+    assert set(np.unique(labels)) == set(range(chosen_k))
+
+
+def test_variant_b_determinism(clean_df):
+    """Rerunning Variant B K-Means with the same seed must produce identical labels."""
+    from burnoutlens.analytics import prepare_behavioral_clustering_data
+
+    X_b_full, _, _ = prepare_behavioral_clustering_data(clean_df)
+
+    run1 = evaluate_kmeans_k_range(X_b_full, k_min=5, k_max=5, random_state=42, n_init=10)
+    labels1 = run1["results_by_k"][5]["labels"]
+
+    run2 = evaluate_kmeans_k_range(X_b_full, k_min=5, k_max=5, random_state=42, n_init=10)
+    labels2 = run2["results_by_k"][5]["labels"]
+
+    np.testing.assert_array_equal(labels1, labels2)
+

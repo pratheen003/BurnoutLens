@@ -428,8 +428,59 @@
   - `test_clustering_reproducibility`: Confirms identical seed reproduces identical assignments.
 - Executed `pytest -v`: **19 passed in 7.42s** (15 existing + 4 new).
 
+---
 
+## 2026-10-04 - Phase 4.1: Clustering Report Patch & Behavioral-Only Variant (Variant B)
 
+### Step 1: Report Corrections & Demographic Confounding Identification
+- **Removed "~0.35" Historical Silhouette**: The original exploratory notebook (`data_understanding.ipynb`) never computed or reported silhouette scores; classified formally as **UNVERIFIED**.
+- **Hypothesis Labeling**: Labeled the explanation that "LabelEncoder caused the cluster shift" as **HYPOTHESIS (Untested)**.
+- **Terminology Alignment**:
+  - Replaced "physiological states" with "measured lifestyle and health variables".
+  - Replaced "robust cluster boundaries" with the measured algorithmic seed ARI: **mean 0.7634, min 0.5878**.
+  - Replaced claims of nominal chi-square hypothesis confirmation with the explicit caveat that the chi-square test is **descriptive only** due to duplicated non-independent rows violating i.i.d. assumptions.
+- **Demographic Confounding Plain Finding**:
+  - Documented that 6 of 8 clusters (75.0%) in Variant A are $\ge 90\%$ dominated by a single gender or occupation.
+  - Specifically, **Cluster 2 and Cluster 3 share near-identical demographic and health status profiles** (100% Female Nurses, Overweight BMI, high prevalence of Sleep Apnea, average Blood Pressure 140/95 mmHg) but have **diametrically opposed burnout risk** (Cluster 2 is 100% High Risk; Cluster 3 is 100% Low Risk).
+  - Identified that the risk divergence is driven purely by sleep duration and quality (Cluster 2 averages 6.07h sleep at quality 6.0; Cluster 3 averages 8.09h sleep at quality 9.0), proving that Variant A conflates demographic dataset structure with lifestyle behaviors.
 
+### Step 2: Dual Silhouette Evaluation on Unique Rows (Variant A)
+- Evaluated K-Means for $k \in [2, 8]$ on both the full 374 rows and the 132 unique-profile rows:
+  - $k=2$: Full Silhouette = `0.2911`, Unique Silhouette = `0.2510`
+  - $k=3$: Full Silhouette = `0.3559`, Unique Silhouette = `0.3151`
+  - $k=4$: Full Silhouette = `0.4108`, Unique Silhouette = `0.3452`
+  - $k=5$: Full Silhouette = `0.4750`, Unique Silhouette = `0.3838`
+  - $k=6$: Full Silhouette = `0.4692`, Unique Silhouette = `0.3931`
+  - $k=7$: Full Silhouette = `0.5067`, Unique Silhouette = `0.4061`
+  - $k=8$: Full Silhouette = `0.5454`, Unique Silhouette = `0.4059`
 
+### Step 3: Variant B (Behavioral-Only Clustering)
+- **Feature Set**: Exactly 5 continuous features (`Sleep Duration`, `Quality of Sleep`, `Physical Activity Level`, `Daily Steps`, `Heart Rate`) scaled via `StandardScaler`. All demographic, occupational, and health-status variables (`Gender`, `Occupation`, `Age`, `BMI Category`, `Sleep Disorder`, `Blood Pressure`) strictly excluded.
+- **Zero Leakage**: Verified with `assert_no_leakage`.
+- **Dual Silhouette Evaluation**:
+  - $k=2$: Full = `0.4159`, Unique = `0.3929`, Inertia (Full: 1165.86, Unique: 448.64)
+  - $k=3$: Full = `0.4887`, Unique = `0.4710`, Inertia (Full: 812.33, Unique: 315.98)
+  - $k=4$: Full = `0.5278`, Unique = `0.4519`, Inertia (Full: 571.05, Unique: 236.46)
+  - $k=5$: Full = `0.5689`, Unique = `0.5146`, Inertia (Full: 413.25, Unique: 168.36) **[CHOSEN B]**
+  - $k=6$: Full = `0.5636`, Unique = `0.4381`, Inertia (Full: 330.19, Unique: 145.62)
+  - $k=7$: Full = `0.5546`, Unique = `0.4683`, Inertia (Full: 260.37, Unique: 114.05)
+  - $k=8$: Full = `0.6338`, Unique = `0.4912`, Inertia (Full: 206.25, Unique: 95.64)
+- **Selection Decision**: Evaluated on 132-unique silhouette. $k=5$ achieves the global best unique silhouette (`0.5146`). $k=3$ unique silhouette is `0.4710` (diff `0.0436` > 0.02 continuity threshold). **$k=5$ chosen**.
+- **Metrics for Chosen $k=5$**:
+  - Cluster Sizes (374 Full Rows): `[178, 34, 22, 108, 32]`
+  - Unique-vs-Full ARI: **1.0000**
+  - Seed Stability (Seeds 0–9): Mean pairwise ARI = **0.8224 ± 0.1654** (min: `0.5147`, max: `1.0000`).
+  - PCA Variance: PC1 = `48.33%`, PC2 = `35.37%`, Cumulative 2-PC = **83.70%** (PC1 loadings: Quality of Sleep +0.616, Sleep Duration +0.585, Heart Rate -0.485; PC2 loadings: Physical Activity +0.689, Daily Steps +0.686).
+  - Demographic Purity: Only 2 of 5 clusters (40.0%) are $\ge 90\%$ single gender or occupation (vs 75.0% in Variant A).
+  - Post-hoc Contingency: $\chi^2 = 290.73$, $\text{df} = 8$, $p = 3.86 \times 10^{-58}$ (descriptive only).
 
+### Step 4: Comparative Synthesis (Variant A vs. Variant B)
+- Documented full comparison table in `reports/clustering_pca.md` contrasting the 27-D occupational archetypes against the 5-D behavioral cohorts.
+- Updated `reports/cluster_profiles.json` to store both `"variant_a_full_features"` and `"variant_b_behavioral_only"` profiles under dedicated keys.
+
+### Step 5: Unit Tests
+- Added 3 new unit tests in `tests/test_analytics.py`:
+  - `test_variant_b_input_columns_and_no_forbidden`: Verifies exactly 5 features and zero leakage.
+  - `test_variant_b_cluster_sizes_and_labels`: Verifies cluster sizes sum to 374 and labels span range(5).
+  - `test_variant_b_determinism`: Verifies deterministic cluster assignments across identical seeds.
+- Executed `pytest -v`: **22 passed in 8.25s** (19 existing + 3 new).

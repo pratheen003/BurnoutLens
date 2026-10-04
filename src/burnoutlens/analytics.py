@@ -15,6 +15,17 @@ from burnoutlens.leakage import assert_no_leakage
 from burnoutlens.preprocessing import build_preprocessor
 
 
+from sklearn.preprocessing import StandardScaler
+
+BEHAVIORAL_FEATURES = [
+    "Sleep Duration",
+    "Quality of Sleep",
+    "Physical Activity Level",
+    "Daily Steps",
+    "Heart Rate",
+]
+
+
 def prepare_clustering_data(df: pd.DataFrame) -> Tuple[np.ndarray, List[str], Any]:
     """Prepare clean, leakage-free clustering matrix from input dataframe.
 
@@ -37,23 +48,54 @@ def prepare_clustering_data(df: pd.DataFrame) -> Tuple[np.ndarray, List[str], An
     return X_trans, feature_names, preprocessor
 
 
+def prepare_behavioral_clustering_data(df: pd.DataFrame) -> Tuple[np.ndarray, List[str], StandardScaler]:
+    """Prepare behavioral-only feature matrix (Variant B: 5 lifestyle/physiological features).
+
+    Features: Sleep Duration, Quality of Sleep, Physical Activity Level, Daily Steps, Heart Rate.
+    Demographics, Age, BMI, Sleep Disorder, and BP are excluded.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Cleaned dataframe.
+
+    Returns
+    -------
+    Tuple[np.ndarray, List[str], StandardScaler]
+        Transformed dense feature matrix (374, 5), feature names, and fitted StandardScaler.
+    """
+    X = df[BEHAVIORAL_FEATURES].copy()
+    assert_no_leakage(X)
+
+    scaler = StandardScaler()
+    X_trans = scaler.fit_transform(X)
+    return X_trans, list(BEHAVIORAL_FEATURES), scaler
+
+
 def evaluate_kmeans_k_range(
     X_trans: np.ndarray,
+    X_unique_trans: Optional[np.ndarray] = None,
     k_min: int = 2,
     k_max: int = 8,
     random_state: int = 42,
     n_init: int = 10,
+    selection_criterion: str = "full",
 ) -> Dict[str, Any]:
     """Evaluate K-Means across a range of k values using inertia and silhouette score.
 
+    Computes metrics on the full dataset (374 rows) and optionally on the unique-profile rows (132 rows).
+
     Pre-specified selection rule:
-    - Choose k with the highest silhouette score.
+    - Choose k with the highest silhouette score (on full dataset if selection_criterion="full",
+      or on unique rows if selection_criterion="unique").
     - If k=3 is within 0.02 of the best, choose k=3 for continuity with the original project.
 
     Parameters
     ----------
     X_trans : np.ndarray
         Standard-scaled and one-hot encoded feature matrix.
+    X_unique_trans : Optional[np.ndarray]
+        Standard-scaled feature matrix on the 132 unique-profile rows.
     k_min : int
         Minimum k (default 2).
     k_max : int
@@ -62,6 +104,8 @@ def evaluate_kmeans_k_range(
         Random seed for KMeans.
     n_init : int
         Number of centroid initializations.
+    selection_criterion : str
+        "full" or "unique".
 
     Returns
     -------
@@ -79,7 +123,7 @@ def evaluate_kmeans_k_range(
         sil = float(silhouette_score(X_trans, labels))
         sizes = [int(s) for s in np.bincount(labels)]
 
-        results_by_k[k] = {
+        entry = {
             "k": k,
             "inertia": inertia,
             "silhouette": sil,
@@ -88,26 +132,47 @@ def evaluate_kmeans_k_range(
             "model": km,
         }
 
-        if sil > best_silhouette:
-            best_silhouette = sil
+        if X_unique_trans is not None:
+            km_u = KMeans(n_clusters=k, random_state=random_state, n_init=n_init)
+            labels_u = km_u.fit_predict(X_unique_trans)
+            inertia_u = float(km_u.inertia_)
+            sil_u = float(silhouette_score(X_unique_trans, labels_u))
+            sizes_u = [int(s) for s in np.bincount(labels_u)]
+            entry["unique_inertia"] = inertia_u
+            entry["unique_silhouette"] = sil_u
+            entry["unique_cluster_sizes"] = sizes_u
+            entry["unique_labels"] = labels_u
+            entry["unique_model"] = km_u
+
+        results_by_k[k] = entry
+
+        eval_sil = entry["unique_silhouette"] if (selection_criterion == "unique" and X_unique_trans is not None) else sil
+        if eval_sil > best_silhouette:
+            best_silhouette = eval_sil
             best_k = k
 
     # Apply pre-specified continuity rule
-    k3_sil = results_by_k[3]["silhouette"]
-    is_k3_within_threshold = (best_silhouette - k3_sil) <= 0.02
-
-    if is_k3_within_threshold:
-        chosen_k = 3
-        selection_reason = (
-            f"k=3 selected under continuity rule: silhouette ({k3_sil:.4f}) is within 0.02 "
-            f"of best silhouette ({best_silhouette:.4f} at k={best_k})."
-        )
+    crit_label = "132-unique silhouette" if (selection_criterion == "unique" and X_unique_trans is not None) else "full silhouette"
+    if 3 in results_by_k:
+        k3_entry = results_by_k[3]
+        k3_sil = k3_entry["unique_silhouette"] if (selection_criterion == "unique" and X_unique_trans is not None) else k3_entry["silhouette"]
+        is_k3_within_threshold = (best_silhouette - k3_sil) <= 0.02
+        if is_k3_within_threshold:
+            chosen_k = 3
+            selection_reason = (
+                f"k=3 selected under continuity rule: {crit_label} ({k3_sil:.4f}) is within 0.02 "
+                f"of best silhouette ({best_silhouette:.4f} at k={best_k})."
+            )
+        else:
+            chosen_k = best_k
+            selection_reason = (
+                f"k={best_k} selected with highest {crit_label} ({best_silhouette:.4f}). "
+                f"k=3 {crit_label} ({k3_sil:.4f}) is not within 0.02 of the best (diff: {best_silhouette - k3_sil:.4f} > 0.02)."
+            )
     else:
+        is_k3_within_threshold = False
         chosen_k = best_k
-        selection_reason = (
-            f"k={best_k} selected with highest silhouette score ({best_silhouette:.4f}). "
-            f"k=3 silhouette ({k3_sil:.4f}) is not within 0.02 of the best (diff: {best_silhouette - k3_sil:.4f} > 0.02)."
-        )
+        selection_reason = f"k={best_k} selected with highest {crit_label} ({best_silhouette:.4f}) (k=3 not evaluated in range)."
 
     return {
         "results_by_k": results_by_k,
@@ -116,6 +181,64 @@ def evaluate_kmeans_k_range(
         "chosen_k": chosen_k,
         "is_k3_within_threshold": is_k3_within_threshold,
         "selection_reason": selection_reason,
+        "selection_criterion": selection_criterion,
+    }
+
+
+def compute_demographic_purity(
+    df: pd.DataFrame,
+    cluster_labels: np.ndarray,
+    chosen_k: int,
+) -> Dict[str, Any]:
+    """Compute share of clusters that are >=90% dominated by a single gender or occupation.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing Gender and Occupation columns.
+    cluster_labels : np.ndarray
+        Cluster assignments (n_samples,).
+    chosen_k : int
+        Number of clusters.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Details per cluster and summary purity proportion.
+    """
+    df_temp = df.copy()
+    df_temp["Cluster"] = cluster_labels
+    cluster_purity = {}
+    pure_clusters_count = 0
+
+    for cid in range(chosen_k):
+        sub = df_temp[df_temp["Cluster"] == cid]
+        size = len(sub)
+        top_gender = str(sub["Gender"].mode()[0])
+        gender_share = float(round((sub["Gender"] == top_gender).mean() * 100, 1))
+
+        top_occ = str(sub["Occupation"].mode()[0])
+        occ_share = float(round((sub["Occupation"] == top_occ).mean() * 100, 1))
+
+        is_pure = (gender_share >= 90.0) or (occ_share >= 90.0)
+        if is_pure:
+            pure_clusters_count += 1
+
+        cluster_purity[cid] = {
+            "size": size,
+            "top_gender": top_gender,
+            "gender_share_pct": gender_share,
+            "top_occupation": top_occ,
+            "occ_share_pct": occ_share,
+            "is_pure_90": is_pure,
+        }
+
+    purity_rate = float(round(pure_clusters_count / chosen_k * 100, 1))
+    return {
+        "pure_clusters_count": pure_clusters_count,
+        "total_clusters": chosen_k,
+        "purity_share_pct": purity_rate,
+        "clusters": cluster_purity,
     }
 
 
