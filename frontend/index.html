@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BurnoutLens - Lifestyle-based burnout risk estimate and transparent explainability analytics.">
+  <title>BurnoutLens | Lifestyle-Based Burnout Risk Analytics</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Global Announcement Banner -->
+  <aside class="announcement-banner" role="complementary" aria-label="Educational Disclaimer">
+    <div class="banner-inner">
+      <span class="banner-badge">NOTICE</span>
+      <span class="banner-text">Educational estimate, not a medical diagnosis.</span>
+    </div>
+  </aside>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header" role="banner">
+    <div class="header-container">
+      <div class="brand">
+        <a href="#/home" class="brand-link" id="brand-link" aria-label="BurnoutLens Home">
+          <svg class="brand-icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          </svg>
+          <span class="brand-name">BurnoutLens</span>
+        </a>
+      </div>
+
+      <nav class="app-nav" role="navigation" aria-label="Main Navigation">
+        <ul class="nav-list">
+          <li><a href="#/home" class="nav-link" data-route="home">Home</a></li>
+          <li><a href="#/assess" class="nav-link" data-route="assess">Assess</a></li>
+          <li><a href="#/result" class="nav-link" data-route="result" id="nav-result-link">Result</a></li>
+          <li><a href="#/analytics" class="nav-link" data-route="analytics">Analytics</a></li>
+          <li><a href="#/models" class="nav-link" data-route="models">Models</a></li>
+          <li><a href="#/about" class="nav-link" data-route="about">About</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" id="theme-toggle-btn" class="btn-icon" aria-label="Toggle visual theme" title="Toggle dark/light theme">
+          <svg id="theme-icon-dark" class="theme-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8A9 9 0 0012 3z" fill="currentColor"/>
+          </svg>
+          <svg id="theme-icon-light" class="theme-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="display:none;">
+            <circle cx="12" cy="12" r="5" fill="currentColor"/>
+            <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <span class="system-status-indicator" id="system-status" title="Checking API status...">
+          <span class="status-dot"></span>
+          <span class="status-label">API Ready</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Global API Offline Alert Box -->
+  <div id="global-error-container" class="container" style="display:none;" role="alert">
+    <div class="alert-box alert-error">
+      <div class="alert-title">Service Unavailable</div>
+      <p id="global-error-message">Unable to connect to the BurnoutLens backend service. Please ensure the server is running.</p>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-connection">Retry Connection</button>
+    </div>
+  </div>
+
+  <!-- Main Routing Container -->
+  <main id="app-main" class="main-content" role="main">
+    
+    <!-- 1. HOME VIEW -->
+    <section id="view-home" class="view-section" aria-labelledby="home-hero-title">
+      <div class="container hero-container">
+        <div class="hero-content">
+          <div class="hero-badge">Evidence-Based Behavioral AI</div>
+          <h1 id="home-hero-title" class="hero-title">Lifestyle-based burnout risk estimate</h1>
+          <p class="hero-subtitle">
+            Transparent, explainable risk assessment powered by validated lifestyle metrics, 
+            mathematically exact SHAP contributions, and behavioral clustering.
+          </p>
+          <div class="hero-actions">
+            <a href="#/assess" class="btn btn-primary btn-lg" id="btn-start-assess">Start Assessment &rarr;</a>
+            <a href="#/analytics" class="btn btn-secondary btn-lg">Explore Analytics</a>
+          </div>
+        </div>
+
+        <div class="home-cards-grid">
+          <article class="card info-card">
+            <div class="card-icon-wrapper icon-blue">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <h2 class="card-title">What It Does</h2>
+            <p class="card-text">
+              Estimates relative burnout risk based on 12 lifestyle, sleep, and cardiovascular parameters.
+              Computes exact per-feature contributions to show precisely which factors drove the assessment.
+            </p>
+          </article>
+
+          <article class="card info-card">
+            <div class="card-icon-wrapper icon-amber">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h2 class="card-title">What It Does Not Do</h2>
+            <p class="card-text">
+              Does not provide a clinical diagnosis of burnout syndrome, depression, or medical conditions.
+              Does not formulate clinical medical treatment plans or infer etiological biological causation.
+            </p>
+          </article>
+
+          <article class="card info-card">
+            <div class="card-icon-wrapper icon-green">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+              </svg>
+            </div>
+            <h2 class="card-title">Data &amp; Integrity</h2>
+            <p class="card-text">
+              Derived from the 374-record Sleep Health &amp; Lifestyle survey dataset. Evaluated under strict
+              Grouped 5-Fold Cross-Validation to eliminate duplicate leakage and ensure honest generalization.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ASSESS VIEW -->
+    <section id="view-assess" class="view-section" style="display:none;" aria-labelledby="assess-title">
+      <div class="container">
+        <header class="section-header">
+          <h1 id="assess-title" class="section-title">Burnout Risk Assessment</h1>
+          <p class="section-subtitle">
+            Enter your sleep, lifestyle, and health indicators below. Form fields and permissible ranges are dynamically calibrated from the verified dataset schema.
+          </p>
+        </header>
+
+        <!-- Dataset Worked Examples Loader -->
+        <div class="examples-panel card">
+          <div class="examples-header">
+            <h2 class="examples-title">Load Sample Profile from Dataset:</h2>
+            <span class="examples-tag">Real Phase 5 Benchmark Rows</span>
+          </div>
+          <div class="examples-buttons">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-example-low">
+              <strong>Low Risk Example</strong> (Accountant, 44y, 7.9h sleep)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-example-med">
+              <strong>Medium Risk Example</strong> (Software Engineer, 27y, 6.1h sleep)
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-example-high">
+              <strong>High Risk Example</strong> (Nurse, 28y, 6.2h sleep, 10k steps)
+            </button>
+          </div>
+        </div>
+
+        <!-- Form Validation Error Callout -->
+        <div id="form-error-callout" class="alert-box alert-error" style="display:none;" role="alert">
+          <div class="alert-title">Submission Error</div>
+          <p id="form-error-text"></p>
+        </div>
+
+        <!-- Assessment Form -->
+        <form id="assessment-form" class="card form-card" novalidate>
+          <div class="form-grid" id="form-fields-container">
+            <div class="loading-placeholder">Loading schema from /meta...</div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-assessment">
+              <span class="btn-spinner" id="submit-spinner" style="display:none;"></span>
+              <span class="btn-text">Calculate Assessment &rarr;</span>
+            </button>
+            <button type="reset" class="btn btn-secondary btn-lg" id="btn-reset-assessment">Reset Fields</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. RESULT VIEW -->
+    <section id="view-result" class="view-section" style="display:none;" aria-labelledby="result-title">
+      <div class="container printable-area">
+        <header class="section-header no-print">
+          <div class="header-pretitle">Assessment Complete</div>
+          <h1 id="result-title" class="section-title">Assessment Results &amp; Explainability</h1>
+        </header>
+
+        <!-- No Result Warning -->
+        <div id="no-result-warning" class="alert-box alert-info" style="display:none;">
+          <p>No assessment has been calculated yet. Please <a href="#/assess">start an assessment</a> to view risk results.</p>
+        </div>
+
+        <div id="result-content" style="display:none;">
+          <!-- Top Row: Risk Level & Uncalibrated Scores -->
+          <div class="result-overview-grid">
+            <article class="card result-card-primary">
+              <div class="result-badge-label">Estimated burnout risk level</div>
+              <div class="risk-badge-wrapper">
+                <span id="res-risk-badge" class="risk-badge risk-low">Low</span>
+              </div>
+              <p class="risk-badge-sub">Predicted categorical class based on lifestyle-stress indicators.</p>
+            </article>
+
+            <article class="card result-card-scores">
+              <div class="scores-header">
+                <h2 class="scores-title">Model score (uncalibrated)</h2>
+                <div class="tooltip-trigger" tabindex="0" aria-label="Model score information">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <div class="tooltip-box" id="probability-tooltip-text">
+                    Model probabilities are uncalibrated estimates derived from a logistic regression model trained on a small dataset (N=374).
+                  </div>
+                </div>
+              </div>
+
+              <div class="score-bars" id="score-bars-container">
+                <!-- Dynamically populated bars -->
+              </div>
+            </article>
+          </div>
+
+          <!-- Section B: What Influenced This Estimate (Diverging SHAP chart) -->
+          <article class="card section-card">
+            <div class="section-card-header">
+              <h2 class="section-card-title">What influenced this estimate</h2>
+              <span class="badge-subtle">Exact Linear SHAP Contributions</span>
+            </div>
+
+            <div class="note-box note-warning">
+              <p>
+                <strong>Important Note:</strong> These show how the model used your inputs, not causes. In this dataset, higher steps and activity are associated with higher predicted risk because of who is in the data (e.g., many nurses); do not read this as advice.
+              </p>
+            </div>
+
+            <!-- Group Filter Tabs -->
+            <div class="group-tabs" role="tablist" aria-label="Feature Contribution Groups">
+              <button type="button" class="tab-btn active" data-group="all" role="tab" aria-selected="true">All 12 Features</button>
+              <button type="button" class="tab-btn" data-group="lifestyle" role="tab" aria-selected="false">Lifestyle</button>
+              <button type="button" class="tab-btn" data-group="health_indicator" role="tab" aria-selected="false">Health Indicators</button>
+              <button type="button" class="tab-btn" data-group="context" role="tab" aria-selected="false">Context (Non-Actionable)</button>
+            </div>
+
+            <!-- SVG Diverging Bar Chart Container -->
+            <div id="contributions-chart-container" class="chart-wrapper">
+              <!-- Rendered via vanilla JS SVG -->
+            </div>
+          </article>
+
+          <!-- Section C: Your Behavioural Group & 2D PCA Projection -->
+          <article class="card section-card">
+            <div class="section-card-header">
+              <h2 class="section-card-title">Your behavioural group</h2>
+              <span class="badge-subtle">Variant B Behavioral Clustering (k=5)</span>
+            </div>
+
+            <div class="cluster-summary-grid">
+              <div class="cluster-info-box">
+                <div class="cluster-id-badge" id="res-cluster-id">Cluster 0</div>
+                <h3 class="cluster-label" id="res-cluster-label">Moderate Sleep, Moderate Activity</h3>
+                <div class="cluster-stats-grid" id="res-cluster-stats">
+                  <!-- Dynamically populated stats -->
+                </div>
+                <div class="note-box note-info">
+                  <p>Exploratory grouping of this small dataset; groups partly mirror risk levels.</p>
+                </div>
+              </div>
+
+              <div class="cluster-pca-box">
+                <h3 class="pca-plot-title">2D PCA Behavioral Space</h3>
+                <p class="pca-plot-subtitle">Your position relative to the 132 unique survey respondent profiles:</p>
+                <div id="pca-scatter-container" class="chart-wrapper">
+                  <!-- Rendered via vanilla JS SVG -->
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Section D: Wellness Information -->
+          <article class="card section-card">
+            <div class="section-card-header">
+              <h2 class="section-card-title">Wellness Information</h2>
+              <span class="badge-subtle" id="wellness-category-badge">General wellness information, not medical advice</span>
+            </div>
+
+            <div class="wellness-content" id="wellness-items-container">
+              <!-- Rendered strictly from API recommendations -->
+            </div>
+          </article>
+
+          <!-- Action Buttons (No-print) -->
+          <div class="result-actions no-print">
+            <a href="#/assess" class="btn btn-secondary">New Assessment</a>
+            <button type="button" class="btn btn-outline" id="btn-print-result">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="6 9 6 2 18 2 18 9"/>
+                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              Print / Save as PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Mandatory Bottom Disclaimer (Always visible on Result) -->
+        <div class="result-disclaimer-box" role="contentinfo">
+          <p id="res-disclaimer-text">Lifestyle-based burnout risk estimate for educational purposes. Not a medical diagnosis.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. ANALYTICS VIEW -->
+    <section id="view-analytics" class="view-section" style="display:none;" aria-labelledby="analytics-title">
+      <div class="container">
+        <header class="section-header">
+          <h1 id="analytics-title" class="section-title">Model &amp; Population Analytics</h1>
+          <p class="section-subtitle">
+            Global interpretability benchmarks derived from held-out permutation testing, global SHAP importance, and Variant B behavioral clustering.
+          </p>
+        </header>
+
+        <!-- Feature Importance Comparison Panel -->
+        <article class="card section-card">
+          <div class="section-card-header">
+            <h2 class="section-card-title">Held-Out Permutation Importance vs. SHAP Importance</h2>
+            <span class="badge-subtle">Spearman Rank Correlation: &rho; = 0.9371 (p &lt; 0.0001)</span>
+          </div>
+
+          <p class="card-intro">
+            Feature stability across validation folds uses the statistical data rule: 
+            <strong>"clearly above zero" if &mu; &gt; 2&sigma;</strong>, else <strong>"not distinguishable from zero"</strong>. 
+            Only <em>Quality of Sleep</em> and <em>Sleep Duration</em> clear this threshold.
+          </p>
+
+          <div id="analytics-permutation-chart" class="chart-wrapper">
+            <!-- Rendered via vanilla JS SVG -->
+          </div>
+        </article>
+
+        <!-- Behavioral Clusters Summary -->
+        <article class="card section-card">
+          <div class="section-card-header">
+            <h2 class="section-card-title">Variant B Behavioral Clusters (k=5)</h2>
+            <span class="badge-subtle">Excluding Demographics &amp; Vitals</span>
+          </div>
+
+          <div class="clusters-grid" id="analytics-clusters-grid">
+            <!-- Dynamically populated from /analytics/clusters -->
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 5. MODELS VIEW -->
+    <section id="view-models" class="view-section" style="display:none;" aria-labelledby="models-title">
+      <div class="container">
+        <header class="section-header">
+          <h1 id="models-title" class="section-title">Supervised Model Comparison</h1>
+          <p class="section-subtitle">
+            Honest evaluation comparing Grouped 5-Fold Cross-Validation (Protocol C) against Random Stratified CV (Protocol D) across five machine learning architectures.
+          </p>
+        </header>
+
+        <!-- Selected Model Highlight Card -->
+        <article class="card highlight-card">
+          <div class="highlight-badge">Selected Production Architecture</div>
+          <h2 class="highlight-title">Logistic Regression (Pipeline with StandardScaler + OneHotEncoder)</h2>
+          <p class="highlight-text">
+            Selected in Phase 3 for highest generalization performance (Macro-F1: <strong>0.9499</strong>) under 5-seed repeated grouped cross-validation, 
+            absolute linear transparency, exact additivity on the log-odds scale, and minimal complexity without decision tree step artifacts.
+          </p>
+        </article>
+
+        <!-- Comparison Grouped Bar Chart -->
+        <article class="card section-card">
+          <div class="section-card-header">
+            <h2 class="section-card-title">Protocol C (Grouped CV) vs. Protocol D (Random CV)</h2>
+            <span class="badge-subtle">Macro-F1 &amp; Accuracy</span>
+          </div>
+
+          <div class="note-box note-warning">
+            <p>
+              <strong>Data Leakage Note:</strong> The gap between Protocol D and Protocol C reflects duplicate profile contamination in random splits. 
+              Tree models (Random Forest, XGBoost, Decision Tree) gained approximately <strong>3.0 to 3.4 points</strong> of inflated accuracy when twins were shared across folds; 
+              Logistic Regression remained robust with only ~1.0 point variance.
+            </p>
+          </div>
+
+          <div id="models-comparison-chart" class="chart-wrapper">
+            <!-- Rendered via vanilla JS SVG -->
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="models-table">
+              <thead>
+                <tr>
+                  <th>Model Architecture</th>
+                  <th>Protocol C Accuracy</th>
+                  <th>Protocol C Macro-F1</th>
+                  <th>Protocol D Accuracy</th>
+                  <th>Protocol D Macro-F1</th>
+                  <th>Inflation (D &minus; C F1)</th>
+                </tr>
+              </thead>
+              <tbody id="models-table-body">
+                <!-- Dynamically populated from /models/comparison -->
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="card-footer-note">
+            <p>
+              <em>Note:</em> Protocol A is a single 80/20 train/test split without group isolation and is not comparable to cross-validation.
+            </p>
+          </footer>
+        </article>
+      </div>
+    </section>
+
+    <!-- 6. ABOUT VIEW -->
+    <section id="view-about" class="view-section" style="display:none;" aria-labelledby="about-title">
+      <div class="container text-container">
+        <header class="section-header">
+          <h1 id="about-title" class="section-title">About BurnoutLens &amp; Methodology</h1>
+          <p class="section-subtitle">
+            Scientific background, model derivation, data lineage, and analytical limitations.
+          </p>
+        </header>
+
+        <article class="card doc-card">
+          <h2>1. Data Lineage &amp; Preprocessing</h2>
+          <p>
+            BurnoutLens is trained on the Kaggle Sleep Health and Lifestyle dataset consisting of <strong>374 total rows</strong>. 
+            Crucially, data auditing revealed that the dataset contains only <strong>132 unique behavioral profiles</strong>; 
+            the remaining 242 rows are exact duplicates (excluding synthetic Person ID).
+          </p>
+          <p>
+            To prevent statistical data leakage, preprocessing uses a scikit-learn <code>ColumnTransformer</code> fit strictly within cross-validation folds. 
+            Nominal features are one-hot encoded, continuous features are standard-scaled, and raw string artifacts (like combined Blood Pressure) are replaced by separate systolic and diastolic integers.
+          </p>
+
+          <h2>2. Target Definition &amp; Ground Truth</h2>
+          <p>
+            The target variable <code>Burnout Risk</code> is derived deterministically from self-reported <code>Stress Level</code> (Low: 1–4, Medium: 5–6, High: 7–10). 
+            Consequently, the classifier predicts self-reported occupational stress rather than a clinically evaluated psychiatric outcome.
+          </p>
+
+          <h2>3. Explainability Architecture</h2>
+          <p>
+            Feature attributions use linear SHAP formulations on the model's <code>decision_function</code> log-odds scale:
+          </p>
+          <pre class="code-block"><code>&phi;<sub>j</sub> = w<sub>j</sub> &middot; (x<sub>j</sub> &minus; E[X<sub>j</sub>])</code></pre>
+          <p>
+            The background baseline <code>E[X<sub>j</sub>]</code> is computed over the <strong>132 unique profiles</strong> to eliminate repeated duplicate distortion. 
+            One-hot indicator contributions are linearly summed to their original 12 source variables, preserving exact mathematical additivity to within 10<sup>-14</sup>.
+          </p>
+
+          <h2>4. Analytical Limitations &amp; Dataset Artifacts</h2>
+          <ul>
+            <li><strong>Observational Nurse Artifact:</strong> In this dataset, respondents with &ge; 10,000 steps and &ge; 90 minutes of activity are 94% nurses with 100% High burnout risk. Consequently, the model assigns positive risk weights to higher steps. This is a descriptive artifact of occupational sampling in this dataset, not health advice.</li>
+            <li><strong>Context vs. Actionable Variables:</strong> Demographic variables (Gender, Age, Occupation) are non-actionable baseline modifiers.</li>
+            <li><strong>Small Dataset:</strong> Trained on 374 survey rows. Probabilities represent relative model log-odds and are uncalibrated for true clinical epidemiology.</li>
+          </ul>
+
+          <h2>5. Developer &amp; API Documentation</h2>
+          <p>
+            Explore the OpenAPI interactive REST documentation served directly by FastAPI:
+          </p>
+          <p>
+            <a href="/docs" class="btn btn-outline btn-sm" target="_blank" rel="noopener">Interactive OpenAPI Documentation (/docs) &rarr;</a>
+          </p>
+
+          <div class="result-disclaimer-box" style="margin-top: 2rem;">
+            <p><strong>Disclaimer:</strong> Lifestyle-based burnout risk estimate for educational purposes. Not a medical diagnosis.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="app-footer" role="contentinfo">
+    <div class="container footer-container">
+      <div class="footer-left">
+        <p><strong>BurnoutLens</strong> &mdash; Transparent ML Explainability &amp; Risk Analytics</p>
+        <p class="footer-disclaimer">Lifestyle-based burnout risk estimate for educational purposes. Not a medical diagnosis.</p>
+      </div>
+      <div class="footer-right">
+        <a href="#/home">Home</a>
+        <a href="#/assess">Assess</a>
+        <a href="#/analytics">Analytics</a>
+        <a href="#/models">Models</a>
+        <a href="#/about">About</a>
+        <a href="/docs">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
