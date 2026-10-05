@@ -609,3 +609,70 @@
 - Created commit: `"feat: add FastAPI backend"`.
 
 
+## Phase 8: Custom Frontend & Single Page Application Integration
+
+### Step 0: Verification of Baseline State
+- Verified git status clean on branch `main`.
+- Executed `pytest -v`: **48 passed** in test suite across Phases 1 through 7.
+
+### Step 1: Frontend Architecture & Structure
+- Created `frontend/` directory served directly by FastAPI via `StaticFiles(directory="frontend", html=True)` mounted at `/`:
+  - `frontend/index.html`: Semantic, accessible HTML5 structure with ARIA landmark attributes, accessible labels, dark/light theme toggle, and mandatory educational disclaimer banner.
+  - `frontend/css/styles.css`: Pure Vanilla CSS design system with CSS custom properties (`var(--...)`), light and dark mode support (`prefers-color-scheme` and explicit toggle), calm non-alarming color scale, and print stylesheet (`@media print`) for clean PDF generation.
+  - `frontend/js/app.js`: Pure Vanilla JavaScript application with client-side hash routing (`#/home`, `#/assess`, `#/result`, `#/analytics`, `#/models`, `#/about`), safe DOM manipulation (using `.textContent` and `createElementNS`), and inline SVG chart generators.
+- Strict Zero-Dependency Rule: No runtime CDN calls, no external fonts, no external libraries. Pure system font stack.
+
+### Step 2: Implementation of Application Views
+1. **Home (`#/home`)**:
+   - Hero header with tagline: *"Lifestyle-based burnout risk estimate"*.
+   - Start Assessment CTA button.
+   - Three informative cards: What It Does, What It Does Not Do, Data & Integrity.
+   - Prominent disclaimer banner: *"Educational estimate, not a medical diagnosis."*
+2. **Assess (`#/assess`)**:
+   - Dynamic form generation querying `GET /meta` at runtime; dropdowns populated from allowed categories and numeric inputs configured with `min`, `max`, and `median` hints without hardcoded bounds.
+   - Three Phase 5 dataset benchmark loader buttons: Low Risk (Accountant, 44y), Medium Risk (Software Engineer, 27y), and High Risk (Nurse, 28y).
+   - Client-side range validation and friendly 422 error display.
+   - Zero client-side persistence (no localStorage used for user inputs).
+3. **Result (`#/result`)**:
+   - Categorical risk badge with explicit text and calm color encoding.
+   - Uncalibrated model score bars with tooltip displaying the API calibration notice.
+   - Diverging horizontal bar chart (SVG) for the 12 SHAP contributions with category filtering tabs (*Lifestyle*, *Health Indicators*, *Context*).
+   - Behavioral clustering card displaying cluster label, profile summary, and an inline 2D PCA scatter plot showing the 132 unique respondent points with the user's position highlighted.
+   - Static wellness recommendations rendered directly from the API.
+   - Always-visible bottom educational disclaimer.
+   - "New assessment" and "Print / save as PDF" buttons.
+4. **Analytics (`#/analytics`)**:
+   - Held-out permutation importance horizontal bar chart with fold error bars.
+   - Explicit data rule badges: *"CLEAR (mean > 2σ)"* for Quality of Sleep and Sleep Duration; *"not distinguishable"* for all remaining 10 features.
+   - Variant B behavioral cluster cards showing size, share, and profile averages.
+5. **Models (`#/models`)**:
+   - Selected model highlight card explaining selection of Logistic Regression.
+   - Grouped bar chart comparing Protocol C (Grouped CV) vs. Protocol D (Random Stratified CV) and data leakage inflation table.
+6. **About (`#/about`)**:
+   - Comprehensive methodology summary, data lineage, SHAP math explanation, dataset limitations, and direct link to FastAPI `/docs`.
+
+### Step 3: Frontend Test Suite & Asset Compliance
+- Created `tests/test_frontend.py` covering:
+  - `test_root_returns_html`: Root `/` serves `index.html` with status 200.
+  - `test_api_routes_preserved_after_mount`: Ensures `/health`, `/meta`, `/docs`, `/openapi.json`, `/analytics/*`, and `/models/comparison` remain operational.
+  - `test_static_assets_served`: Verifies `/css/styles.css` and `/js/app.js`.
+  - `test_index_html_contains_disclaimer`: Confirms mandatory disclaimer presence.
+  - `test_no_external_urls_in_frontend`: Regex grep confirms zero external `http(s)://` URLs exist in frontend assets (only standard W3C SVG namespace string allowed).
+- Test suite status: **53 passed in 16.03s** (48 existing + 5 frontend).
+
+### Step 4: Live Verification & Smoke Testing
+- Launched background uvicorn server (`uvicorn burnoutlens.api:app --app-dir src --port 8000`).
+- Verified via HTTP requests:
+  - `GET /` -> `200 OK` (serves complete Single Page Application).
+  - `POST /predict` on Low Risk example (Accountant, 44, F) -> `Low` ($P(\text{Low}) = 0.7797, P(\text{Medium}) = 0.2198, P(\text{High}) = 0.0006$).
+  - `POST /predict` on Medium Risk example (Software Engineer, 27, M) -> `Medium` ($P(\text{Medium}) = 0.6922, P(\text{High}) = 0.3053, P(\text{Low}) = 0.0025$).
+  - `POST /predict` on High Risk example (Nurse, 28, F) -> `High` ($P(\text{High}) = 0.7682, P(\text{Medium}) = 0.2317, P(\text{Low}) = 0.0001$).
+- Browser subagent attempted: Playwright browser context failed due to driver download 404 from Azure Edge CDN (`playwright-1.57.0-win32_x64.zip`). Marked visual browser check as UNVERIFIED per prompt protocol.
+- Terminated background server cleanly.
+
+### Step 5: Commits & Versioning
+- Commit 1: `6ac1173` (*feat: add frontend*).
+- Commit 2: *docs: add README and screenshots*.
+
+
+
