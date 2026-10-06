@@ -71,10 +71,20 @@ BurnoutLens/
 - Python 3.10+ (tested on Python 3.14.6)
 - PowerShell, Bash, or standard command shell
 
+### Dataset Acquisition (Optional for Inference, Required for Full Training/Data Tests)
+1. Download the **"Sleep Health and Lifestyle Dataset"** from Kaggle:
+   - [Kaggle: Sleep Health and Lifestyle Dataset](https://www.kaggle.com/datasets/uom190346a/sleep-health-and-lifestyle-dataset)
+   - *Note*: License terms have not been independently verified; the raw CSV is excluded from git tracking (`.gitignore`) and is never committed to the repository.
+2. Place the downloaded CSV file in the repository at:
+   ```text
+   data/raw/Sleep_health_and_lifestyle_dataset.csv
+   ```
+
 ### Installation
 
-1. Clone or extract the repository:
+1. Clone the repository:
    ```bash
+   git clone https://github.com/pratheen003/BurnoutLens.git
    cd BurnoutLens
    ```
 
@@ -92,7 +102,7 @@ BurnoutLens/
 
 4. Launch the application:
    ```powershell
-   uvicorn burnoutlens.api:app --app-dir src --reload --port 8000
+   uvicorn burnoutlens.api:app --app-dir src --port 8000
    ```
 
 5. Open your browser:
@@ -103,21 +113,34 @@ BurnoutLens/
 
 ## 4. Running the Test Suite
 
-Execute the complete test suite across all modules:
+Tests can be run either **with** or **without** the raw Kaggle dataset CSV:
+
+### Running Without the CSV (Inference, Service & API Tests)
+If the raw dataset CSV is absent, tests that require raw data will automatically skip with a clear message, while all service, model artifact, API endpoint, and frontend tests will execute and pass:
 
 ```powershell
 $env:PYTHONPATH = "src"
 pytest -v
 ```
+*Expected Output*: **21 passed, 33 skipped**.
 
-All 53 unit and integration tests will execute and pass:
-- **Phase 2 Preprocessing & Leakage Tests**: 10 tests passing
-- **Phase 3 Supervised Evaluation Tests**: 5 tests passing
-- **Phase 4 Behavioral Clustering Tests**: 7 tests passing
-- **Phase 5 Explainable AI Tests**: 5 tests passing
-- **Phase 6 Prediction Service Tests**: 9 tests passing
-- **Phase 7 FastAPI Backend Tests**: 12 tests passing
-- **Phase 8 Frontend & Offline Asset Tests**: 5 tests passing
+### Running With the CSV (Full Suite)
+When `data/raw/Sleep_health_and_lifestyle_dataset.csv` is present, the complete test suite executes across all preprocessing, model validation, and analysis modules:
+
+```powershell
+$env:PYTHONPATH = "src"
+pytest -v
+```
+*Expected Output*: **54 passed**.
+
+### Test Coverage Breakdown:
+- **Phase 2 Preprocessing & Leakage Tests** (`tests/test_preprocessing.py`): 10 tests (skipped without CSV)
+- **Phase 3 Supervised Evaluation Tests** (`tests/test_supervised.py`): 5 tests (skipped without CSV)
+- **Phase 4 Behavioral Clustering Tests** (`tests/test_analytics.py`): 7 tests (skipped without CSV)
+- **Phase 5 Explainable AI Tests** (`tests/test_explain.py`): 5 tests (skipped without CSV)
+- **Phase 6 Prediction Service Tests** (`tests/test_service.py`): 9 tests (4 pass without CSV, 5 skip without CSV)
+- **Phase 7 FastAPI Backend Tests** (`tests/test_api.py`): 12 tests (all pass without CSV)
+- **Phase 8 Frontend & Dataset Integrity Tests** (`tests/test_frontend.py`): 6 tests (5 pass without CSV, 1 skips without CSV)
 
 ---
 
