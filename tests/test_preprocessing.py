@@ -22,6 +22,11 @@ from burnoutlens.features import (
 from burnoutlens.leakage import assert_no_leakage
 from burnoutlens.preprocessing import build_preprocessor
 
+pytestmark = pytest.mark.skipif(
+    not RAW_CSV_PATH.exists(),
+    reason="Raw dataset CSV not found at: data/raw/Sleep_health_and_lifestyle_dataset.csv",
+)
+
 
 @pytest.fixture
 def raw_df():

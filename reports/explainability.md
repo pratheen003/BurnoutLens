@@ -148,10 +148,11 @@ NotImplementedError: Categorical split is not yet supported. You can still use T
 
 ## 6. Local Explanations: 3 Worked Examples
 
-We applied `explain_row()` to 3 real dataset records representing Low, Medium, and High predicted risk states.
+We applied `explain_row()` to 3 verified real dataset records (first matching ground-truth and predicted class: Low=index 32, Medium=index 0, High=index 1).
 
 ### Example 1: Predicted LOW Burnout Risk
-- **Input Profile**: Age: 44, Gender: Female, Occupation: Accountant, Sleep: 7.9h, Sleep Quality: 8/10, Heart Rate: 69 bpm, BP: 117/76 mmHg.
+- **Dataset Row Index**: 32 (Ground Truth: Low)
+- **Input Profile**: Age: 31, Gender: Female, Occupation: Nurse, Sleep: 7.9h, Sleep Quality: 8/10, Physical Activity: 75m, Steps: 6800, Heart Rate: 69 bpm, BMI: Normal, Sleep Disorder: None, BP: 117/76 mmHg.
 - **Predicted Class**: **Low** (Probability: **92.3%**)
 - **Base Value (Log-Odds)**: -0.3873
 - **Top 5 Contributing Features**:
@@ -162,7 +163,8 @@ We applied `explain_row()` to 3 real dataset records representing Low, Medium, a
   - `Heart Rate` = `69` -> **+0.6482** (pushes toward Low)
 
 ### Example 2: Predicted MEDIUM Burnout Risk
-- **Input Profile**: Age: 27, Gender: Male, Occupation: Software Engineer, Sleep: 6.1h, Sleep Quality: 6/10, Physical Activity: 42m, Steps: 4200, BP: 126/83 mmHg.
+- **Dataset Row Index**: 0 (Ground Truth: Medium)
+- **Input Profile**: Age: 27, Gender: Male, Occupation: Software Engineer, Sleep: 6.1h, Sleep Quality: 6/10, Physical Activity: 42m, Steps: 4200, Heart Rate: 77 bpm, BMI: Overweight, Sleep Disorder: None, BP: 126/83 mmHg.
 - **Predicted Class**: **Medium** (Probability: **69.2%**)
 - **Base Value (Log-Odds)**: 1.1094
 - **Top 5 Contributing Features**:
@@ -173,7 +175,8 @@ We applied `explain_row()` to 3 real dataset records representing Low, Medium, a
   - `Physical Activity Level` = `42` -> **-0.4867** (pushes away)
 
 ### Example 3: Predicted HIGH Burnout Risk
-- **Input Profile**: Age: 28, Gender: Female, Occupation: Nurse, Sleep: 6.2h, Sleep Quality: 6/10, Physical Activity: 90m, Steps: 10000, Heart Rate: 75 bpm, BP: 140/95 mmHg.
+- **Dataset Row Index**: 1 (Ground Truth: High)
+- **Input Profile**: Age: 28, Gender: Male, Occupation: Doctor, Sleep: 6.2h, Sleep Quality: 6/10, Physical Activity: 60m, Steps: 10000, Heart Rate: 75 bpm, BMI: Normal, Sleep Disorder: None, BP: 125/80 mmHg.
 - **Predicted Class**: **High** (Probability: **97.8%**)
 - **Base Value (Log-Odds)**: -0.7221
 - **Top 5 Contributing Features**:

@@ -8,7 +8,7 @@ import pytest
 import shap
 
 from burnoutlens.analytics import BEHAVIORAL_FEATURES
-from burnoutlens.config import INPUT_FEATURES
+from burnoutlens.config import INPUT_FEATURES, RAW_CSV_PATH
 from burnoutlens.data import load_raw
 from burnoutlens.explain import (
     CLASS_NAMES,
@@ -26,6 +26,8 @@ from burnoutlens.service import (
 
 @pytest.fixture(scope="module")
 def df_clean():
+    if not RAW_CSV_PATH.exists():
+        pytest.skip("Raw dataset CSV not found at: data/raw/Sleep_health_and_lifestyle_dataset.csv")
     return clean_data(load_raw())
 
 

@@ -672,7 +672,47 @@
 
 ### Step 5: Commits & Versioning
 - Commit 1: `6ac1173` (*feat: add frontend*).
-- Commit 2: *docs: add README and screenshots*.
+- Commit 2: `f68b9db` (*docs: add README and screenshots*).
+  - *Note*: The commit `docs: add README and screenshots` contained no image files in `docs/screenshots/` (screenshots are added manually to `docs/screenshots/`).
+
+---
+
+## 2026-10-06 - Phase 9-10: Real Dataset Examples, CSV-Optional Testing & Clean-Clone Verification
+
+### Context & Discrepancy Analysis
+- **Phase 5 Worked Example Audit**:
+  - In Phase 5, the worked examples in `reports/explainability.md` and `reports/feature_importance.json` claimed to be real dataset rows ("Row 10" [Accountant, 44] and "Row 16" [Nurse, 28, 10,000 steps]).
+  - Inspection of the cleaned dataset revealed that these did not match the underlying CSV: in `clean_data(load_raw())`, 0-indexed row 10 is Male Doctor (29y) with `Stress Level = 8` (High risk), and row 16 is Female Nurse (29y) with `Stress Level = 7` (High risk).
+  - **Root Cause**: During Phase 5, illustrative profiles were hand-crafted with adjusted demographic fields rather than selected strictly by index from the dataset.
+  - **Action**: All Phase 5 numbers quoted from those hand-crafted profiles are superseded. Real dataset rows were selected by an unambiguous deterministic rule.
+
+### Rule-Selected Real Dataset Rows
+For each class, the selected record is the FIRST row (lowest index in `clean_data(load_raw())`) where ground-truth class equals the production model's predicted class:
+1. **Low Risk Example (`Row Index 32`)**:
+   - `Gender`: Female, `Age`: 31, `Occupation`: Nurse, `Sleep Duration`: 7.9, `Quality of Sleep`: 8, `Physical Activity Level`: 75, `BMI Category`: Normal, `Heart Rate`: 69, `Daily Steps`: 6800, `Sleep Disorder`: None, `Systolic BP`: 117, `Diastolic BP`: 76.
+   - Ground Truth: `Stress Level = 4` -> **Low**
+   - API Prediction (`POST /predict`): `predicted_class: "Low"`, `model_probability: {"Low": 0.9235, "Medium": 0.0765, "High": 0.0000}`.
+2. **Medium Risk Example (`Row Index 0`)**:
+   - `Gender`: Male, `Age`: 27, `Occupation`: Software Engineer, `Sleep Duration`: 6.1, `Quality of Sleep`: 6, `Physical Activity Level`: 42, `BMI Category`: Overweight, `Heart Rate`: 77, `Daily Steps`: 4200, `Sleep Disorder`: None, `Systolic BP`: 126, `Diastolic BP`: 83.
+   - Ground Truth: `Stress Level = 6` -> **Medium**
+   - API Prediction (`POST /predict`): `predicted_class: "Medium"`, `model_probability: {"Low": 0.0025, "Medium": 0.6922, "High": 0.3053}`.
+3. **High Risk Example (`Row Index 1`)**:
+   - `Gender`: Male, `Age`: 28, `Occupation`: Doctor, `Sleep Duration`: 6.2, `Quality of Sleep`: 6, `Physical Activity Level`: 60, `BMI Category`: Normal, `Heart Rate`: 75, `Daily Steps`: 10000, `Sleep Disorder`: None, `Systolic BP`: 125, `Diastolic BP`: 80.
+   - Ground Truth: `Stress Level = 8` -> **High**
+   - API Prediction (`POST /predict`): `predicted_class: "High"`, `model_probability: {"Low": 0.0000, "Medium": 0.0223, "High": 0.9777}`.
+
+### Updates Applied
+1. **Explainability Artifacts**:
+   - Updated `scripts/run_explainability.py` to select rows 32, 0, 1 dynamically and regenerate `reports/explainability.md`, `reports/feature_importance.json`, and `reports/figures/local_example_high.png`.
+2. **Frontend UI & Assets**:
+   - Updated `DATASET_EXAMPLES` in `frontend/js/app.js` with exact 12-field values for rows 32, 0, 1.
+   - Updated button labels in `frontend/index.html` to reflect exact respondent profiles while keeping the label *"Real Dataset Rows"*.
+3. **CSV-Optional Testing**:
+   - Added `pytestmark = pytest.mark.skipif(not RAW_CSV_PATH.exists(), ...)` across tests requiring the raw dataset (`test_preprocessing.py`, `test_supervised.py`, `test_analytics.py`, `test_explain.py`, `test_service.py` data-dependent fixture).
+   - Added `test_frontend_examples_match_dataset_rows` in `tests/test_frontend.py` to assert exact equality between frontend constants and CSV rows.
+   - Validated test results:
+     - **With CSV**: `54 passed in 15.51s`.
+     - **Without CSV**: `21 passed, 33 skipped in 8.55s` (API, service artifact tests, frontend tests pass).
 
 
 

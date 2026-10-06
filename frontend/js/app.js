@@ -46,18 +46,18 @@ const FEATURE_LABELS = {
   "diastolic_bp": "Diastolic Blood Pressure (mmHg)",
 };
 
-// Phase 5 Worked Examples (Real benchmark rows from dataset)
+// Verified Dataset Examples (Real rows from cleaned dataset: Low=Row 32, Medium=Row 0, High=Row 1)
 const DATASET_EXAMPLES = {
   low: {
     gender: "Female",
-    age: 44,
-    occupation: "Accountant",
+    age: 31,
+    occupation: "Nurse",
     sleep_duration: 7.9,
     quality_of_sleep: 8,
     physical_activity_level: 75,
     bmi_category: "Normal",
     heart_rate: 69,
-    daily_steps: 7500,
+    daily_steps: 6800,
     sleep_disorder: "None",
     systolic_bp: 117,
     diastolic_bp: 76,
@@ -77,18 +77,18 @@ const DATASET_EXAMPLES = {
     diastolic_bp: 83,
   },
   high: {
-    gender: "Female",
+    gender: "Male",
     age: 28,
-    occupation: "Nurse",
+    occupation: "Doctor",
     sleep_duration: 6.2,
     quality_of_sleep: 6,
-    physical_activity_level: 90,
-    bmi_category: "Overweight",
+    physical_activity_level: 60,
+    bmi_category: "Normal",
     heart_rate: 75,
     daily_steps: 10000,
-    sleep_disorder: "Sleep Apnea",
-    systolic_bp: 140,
-    diastolic_bp: 95,
+    sleep_disorder: "None",
+    systolic_bp: 125,
+    diastolic_bp: 80,
   },
 };
 

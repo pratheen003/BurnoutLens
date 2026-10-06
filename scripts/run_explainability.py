@@ -127,10 +127,29 @@ def main():
     df_preds = df.copy()
     df_preds["pred_idx"] = pipe.predict(df[INPUT_FEATURES])
 
-    # Select representative real dataset rows
-    idx_low = df_preds[df_preds["pred_idx"] == 0].index[0]
-    idx_med = df_preds[df_preds["pred_idx"] == 1].index[0]
-    idx_high = df_preds[df_preds["pred_idx"] == 2].index[0]
+    # Select representative real dataset rows: first matching ground truth and prediction
+    # Low: index 32, Medium: index 0, High: index 1
+    y_target_series = make_target(df)
+    
+    idx_low = None
+    for idx in range(len(df)):
+        if y_target_series.iloc[idx] == "Low" and df_preds.loc[idx, "pred_idx"] == 0:
+            idx_low = idx
+            break
+
+    idx_med = None
+    for idx in range(len(df)):
+        if y_target_series.iloc[idx] == "Medium" and df_preds.loc[idx, "pred_idx"] == 1:
+            idx_med = idx
+            break
+
+    idx_high = None
+    for idx in range(len(df)):
+        if y_target_series.iloc[idx] == "High" and df_preds.loc[idx, "pred_idx"] == 2:
+            idx_high = idx
+            break
+
+    print(f"Rule-selected rows -> Low: index {idx_low}, Medium: index {idx_med}, High: index {idx_high}")
 
     row_low = df.loc[idx_low, INPUT_FEATURES].to_dict()
     row_med = df.loc[idx_med, INPUT_FEATURES].to_dict()
@@ -270,6 +289,12 @@ def main():
         ex_low=ex_low,
         ex_med=ex_med,
         ex_high=ex_high,
+        row_low=row_low,
+        row_med=row_med,
+        row_high=row_high,
+        idx_low=idx_low,
+        idx_med=idx_med,
+        idx_high=idx_high,
         intercepts=intercepts,
     )
     print("Phase 5 explainability execution completed successfully.")
@@ -292,6 +317,12 @@ def write_explainability_report(
     ex_low: dict,
     ex_med: dict,
     ex_high: dict,
+    row_low: dict,
+    row_med: dict,
+    row_high: dict,
+    idx_low: int,
+    idx_med: int,
+    idx_high: int,
     intercepts: np.ndarray,
 ):
     content = f"""# BurnoutLens Phase 5: Model Explainability Report
@@ -428,10 +459,11 @@ When initializing `shap.TreeExplainer(model, data=X_unique_trans)` on XGBoost 3.
 
 ## 6. Local Explanations: 3 Worked Examples
 
-We applied `explain_row()` to 3 real dataset records representing Low, Medium, and High predicted risk states.
+We applied `explain_row()` to 3 verified real dataset records (first matching ground-truth and predicted class: Low=index {idx_low}, Medium=index {idx_med}, High=index {idx_high}).
 
 ### Example 1: Predicted LOW Burnout Risk
-- **Input Profile**: Age: {ex_low['top_features'][0]['user_value'] if ex_low['top_features'][0]['feature'] == 'Age' else '44'}, Gender: Female, Occupation: Accountant, Sleep: 7.9h, Sleep Quality: 8/10, Heart Rate: 69 bpm, BP: 117/76 mmHg.
+- **Dataset Row Index**: {idx_low} (Ground Truth: Low)
+- **Input Profile**: Age: {int(row_low['Age'])}, Gender: {row_low['Gender']}, Occupation: {row_low['Occupation']}, Sleep: {row_low['Sleep Duration']}h, Sleep Quality: {int(row_low['Quality of Sleep'])}/10, Physical Activity: {int(row_low['Physical Activity Level'])}m, Steps: {int(row_low['Daily Steps'])}, Heart Rate: {int(row_low['Heart Rate'])} bpm, BMI: {row_low['BMI Category']}, Sleep Disorder: {row_low['Sleep Disorder']}, BP: {int(row_low['Systolic BP'])}/{int(row_low['Diastolic BP'])} mmHg.
 - **Predicted Class**: **{ex_low['predicted_class']}** (Probability: **{ex_low['class_probabilities']['Low']*100:.1f}%**)
 - **Base Value (Log-Odds)**: {ex_low['base_value']:.4f}
 - **Top 5 Contributing Features**:
@@ -441,7 +473,8 @@ We applied `explain_row()` to 3 real dataset records representing Low, Medium, a
 
     content += f"""
 ### Example 2: Predicted MEDIUM Burnout Risk
-- **Input Profile**: Age: 27, Gender: Male, Occupation: Software Engineer, Sleep: 6.1h, Sleep Quality: 6/10, Physical Activity: 42m, Steps: 4200, BP: 126/83 mmHg.
+- **Dataset Row Index**: {idx_med} (Ground Truth: Medium)
+- **Input Profile**: Age: {int(row_med['Age'])}, Gender: {row_med['Gender']}, Occupation: {row_med['Occupation']}, Sleep: {row_med['Sleep Duration']}h, Sleep Quality: {int(row_med['Quality of Sleep'])}/10, Physical Activity: {int(row_med['Physical Activity Level'])}m, Steps: {int(row_med['Daily Steps'])}, Heart Rate: {int(row_med['Heart Rate'])} bpm, BMI: {row_med['BMI Category']}, Sleep Disorder: {row_med['Sleep Disorder']}, BP: {int(row_med['Systolic BP'])}/{int(row_med['Diastolic BP'])} mmHg.
 - **Predicted Class**: **{ex_med['predicted_class']}** (Probability: **{ex_med['class_probabilities']['Medium']*100:.1f}%**)
 - **Base Value (Log-Odds)**: {ex_med['base_value']:.4f}
 - **Top 5 Contributing Features**:
@@ -451,7 +484,8 @@ We applied `explain_row()` to 3 real dataset records representing Low, Medium, a
 
     content += f"""
 ### Example 3: Predicted HIGH Burnout Risk
-- **Input Profile**: Age: 28, Gender: Female, Occupation: Nurse, Sleep: 6.2h, Sleep Quality: 6/10, Physical Activity: 90m, Steps: 10000, Heart Rate: 75 bpm, BP: 140/95 mmHg.
+- **Dataset Row Index**: {idx_high} (Ground Truth: High)
+- **Input Profile**: Age: {int(row_high['Age'])}, Gender: {row_high['Gender']}, Occupation: {row_high['Occupation']}, Sleep: {row_high['Sleep Duration']}h, Sleep Quality: {int(row_high['Quality of Sleep'])}/10, Physical Activity: {int(row_high['Physical Activity Level'])}m, Steps: {int(row_high['Daily Steps'])}, Heart Rate: {int(row_high['Heart Rate'])} bpm, BMI: {row_high['BMI Category']}, Sleep Disorder: {row_high['Sleep Disorder']}, BP: {int(row_high['Systolic BP'])}/{int(row_high['Diastolic BP'])} mmHg.
 - **Predicted Class**: **{ex_high['predicted_class']}** (Probability: **{ex_high['class_probabilities']['High']*100:.1f}%**)
 - **Base Value (Log-Odds)**: {ex_high['base_value']:.4f}
 - **Top 5 Contributing Features**:

@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import StratifiedGroupKFold
 
-from burnoutlens.config import INPUT_FEATURES, NUMERIC_FEATURES
+from burnoutlens.config import INPUT_FEATURES, NUMERIC_FEATURES, RAW_CSV_PATH
 from burnoutlens.data import load_raw
 from burnoutlens.features import add_duplicate_group_id, clean_data, make_target
 from burnoutlens.leakage import assert_no_leakage
@@ -14,6 +14,11 @@ from burnoutlens.modeling import (
     LABEL_TO_INT,
     get_models,
     make_pipeline,
+)
+
+pytestmark = pytest.mark.skipif(
+    not RAW_CSV_PATH.exists(),
+    reason="Raw dataset CSV not found at: data/raw/Sleep_health_and_lifestyle_dataset.csv",
 )
 
 

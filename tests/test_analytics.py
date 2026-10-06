@@ -8,9 +8,14 @@ from burnoutlens.analytics import (
     fit_pca,
     prepare_clustering_data,
 )
-from burnoutlens.config import FORBIDDEN_COLUMNS, INPUT_FEATURES
+from burnoutlens.config import FORBIDDEN_COLUMNS, INPUT_FEATURES, RAW_CSV_PATH
 from burnoutlens.data import load_raw
 from burnoutlens.features import clean_data
+
+pytestmark = pytest.mark.skipif(
+    not RAW_CSV_PATH.exists(),
+    reason="Raw dataset CSV not found at: data/raw/Sleep_health_and_lifestyle_dataset.csv",
+)
 
 
 @pytest.fixture

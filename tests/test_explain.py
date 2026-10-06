@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from burnoutlens.config import FORBIDDEN_COLUMNS, INPUT_FEATURES
+from burnoutlens.config import FORBIDDEN_COLUMNS, INPUT_FEATURES, RAW_CSV_PATH
 from burnoutlens.data import load_raw
 from burnoutlens.explain import (
     aggregate_shap_to_original,
@@ -13,6 +13,11 @@ from burnoutlens.explain import (
     map_transformed_to_original,
 )
 from burnoutlens.features import clean_data
+
+pytestmark = pytest.mark.skipif(
+    not RAW_CSV_PATH.exists(),
+    reason="Raw dataset CSV not found at: data/raw/Sleep_health_and_lifestyle_dataset.csv",
+)
 
 
 @pytest.fixture

@@ -91,3 +91,72 @@ def test_no_external_urls_in_frontend():
                 violations.append(f"{file_path.name}: {match}")
 
     assert not violations, f"Forbidden external URLs found in frontend assets: {violations}"
+
+
+def test_frontend_examples_match_dataset_rows():
+    """Ensure frontend DATASET_EXAMPLES match real rows (32, 0, 1) in the cleaned dataset.
+
+    Skipped if the raw CSV is absent.
+    """
+    from burnoutlens.config import RAW_CSV_PATH
+    if not RAW_CSV_PATH.exists():
+        pytest.skip(f"Raw dataset CSV not found at: {RAW_CSV_PATH}")
+
+    import json
+    from burnoutlens.data import load_raw
+    from burnoutlens.features import clean_data
+
+    root_dir = Path(__file__).resolve().parent.parent
+    app_js = (root_dir / "frontend" / "js" / "app.js").read_text(encoding="utf-8")
+
+    match = re.search(r"const DATASET_EXAMPLES\s*=\s*(\{[\s\S]*?\n\};)", app_js)
+    assert match, "DATASET_EXAMPLES not found in frontend/js/app.js"
+
+    js_block = match.group(1).rstrip(";").strip()
+    # Strip line comments
+    js_clean = re.sub(r"//.*", "", js_block)
+    # Quote keys
+    js_clean = re.sub(r"([{\s,])([a-zA-Z_]\w*)\s*:", r'\1"\2":', js_clean)
+    # Strip trailing commas before closing braces
+    js_clean = re.sub(r",\s*([}\]])", r"\1", js_clean)
+
+    examples = json.loads(js_clean)
+    df = clean_data(load_raw())
+
+    mapping = {
+        "gender": "Gender",
+        "age": "Age",
+        "occupation": "Occupation",
+        "sleep_duration": "Sleep Duration",
+        "quality_of_sleep": "Quality of Sleep",
+        "physical_activity_level": "Physical Activity Level",
+        "bmi_category": "BMI Category",
+        "heart_rate": "Heart Rate",
+        "daily_steps": "Daily Steps",
+        "sleep_disorder": "Sleep Disorder",
+        "systolic_bp": "Systolic BP",
+        "diastolic_bp": "Diastolic BP",
+    }
+
+    # Low = Row index 32, Medium = Row index 0, High = Row index 1
+    expected_indices = {"low": 32, "medium": 0, "high": 1}
+
+    for key, row_idx in expected_indices.items():
+        assert key in examples, f"Missing '{key}' example in DATASET_EXAMPLES"
+        ex_data = examples[key]
+        csv_row = df.iloc[row_idx]
+
+        for js_field, csv_col in mapping.items():
+            val_js = ex_data[js_field]
+            val_csv = csv_row[csv_col]
+
+            if isinstance(val_js, float) or isinstance(val_csv, float):
+                assert abs(float(val_js) - float(val_csv)) < 1e-4, (
+                    f"Mismatch in {key} example field '{js_field}': "
+                    f"JS={val_js} vs CSV={val_csv} (row {row_idx})"
+                )
+            else:
+                assert str(val_js) == str(val_csv), (
+                    f"Mismatch in {key} example field '{js_field}': "
+                    f"JS='{val_js}' vs CSV='{val_csv}' (row {row_idx})"
+                )

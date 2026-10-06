@@ -9,14 +9,14 @@ client = TestClient(app)
 
 VALID_SAMPLE_PAYLOAD = {
     "gender": "Female",
-    "age": 44,
-    "occupation": "Accountant",
+    "age": 31,
+    "occupation": "Nurse",
     "sleep_duration": 7.9,
     "quality_of_sleep": 8,
     "physical_activity_level": 75,
     "bmi_category": "Normal",
     "heart_rate": 69,
-    "daily_steps": 7500,
+    "daily_steps": 6800,
     "sleep_disorder": "None",
     "systolic_bp": 117,
     "diastolic_bp": 76,
